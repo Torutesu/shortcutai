@@ -304,7 +304,7 @@ struct SearchBarView: View {
     var backgroundColor: Color {
         colorScheme == .light
             ? Color(red: 241/255, green: 241/255, blue: 239/255)
-            : Color(white: 0.2)
+            : Color(white: 1).opacity(0.1)
     }
 
     var body: some View {
@@ -322,14 +322,10 @@ struct SearchBarView: View {
                 }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(backgroundColor)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
         )
     }
 }
