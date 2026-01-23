@@ -42,8 +42,11 @@ struct PopoverView: View {
             } else if let result = resultText, let action = activeAction {
                 // Text result view
                 resultView(result: result, action: action)
-            } else if isProcessing, let action = activeAction {
+            } else if let action = activeAction, isProcessing {
                 // Loading view with skeleton
+                loadingView(action: action)
+            } else if let action = initialAction, activeAction == nil {
+                // Initial loading state when action is provided but not yet started
                 loadingView(action: action)
             } else if initialAction == nil {
                 // Main popup view (only when no initial action)
@@ -437,23 +440,39 @@ struct PopoverView: View {
 
             Divider()
 
-            // Image content
-            VStack {
-                Spacer()
+            // Image content with input text
+            ScrollView {
+                VStack(spacing: 16) {
+                    // QR Code image
+                    Image(nsImage: image)
+                        .resizable()
+                        .interpolation(.none)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 200, height: 200)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                        .padding(.top, 20)
 
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.none)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: 280, maxHeight: 280)
-                    .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
-
-                Spacer()
+                    // Show the encoded text
+                    if !textManager.capturedText.isEmpty {
+                        VStack(spacing: 4) {
+                            Text("Encoded content:")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                            Text(textManager.capturedText)
+                                .font(.system(size: 12))
+                                .foregroundColor(.primary)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(3)
+                                .padding(.horizontal, 20)
+                        }
+                        .padding(.bottom, 10)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(20)
 
             Divider()
 
@@ -469,13 +488,25 @@ struct PopoverView: View {
                 Spacer()
 
                 HStack(spacing: 8) {
-                    Button("Copy") {
+                    Button(action: {
                         copyImageToClipboard(image)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "doc.on.doc")
+                                .font(.system(size: 11))
+                            Text("Copy")
+                        }
                     }
                     .buttonStyle(.bordered)
 
-                    Button("Save") {
+                    Button(action: {
                         saveImage(image)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 11))
+                            Text("Save")
+                        }
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -524,17 +555,23 @@ struct PopoverView: View {
 
         // Handle plugins
         if action.isPlugin, let pluginType = action.pluginType {
-            let pluginResult = PluginProcessor.shared.process(pluginType: pluginType, input: textToProcess)
+            // Process plugin asynchronously to allow UI to update
+            Task { @MainActor in
+                // Small delay to ensure UI shows loading state first
+                try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
 
-            switch pluginResult {
-            case .text(let text):
-                resultText = text
-            case .image(let image):
-                resultImage = image
-            case .error(let error):
-                resultText = "Error: \(error)"
+                let pluginResult = PluginProcessor.shared.process(pluginType: pluginType, input: textToProcess)
+
+                switch pluginResult {
+                case .text(let text):
+                    resultText = text
+                case .image(let image):
+                    resultImage = image
+                case .error(let error):
+                    resultText = "Error: \(error)"
+                }
+                isProcessing = false
             }
-            isProcessing = false
             return
         }
 

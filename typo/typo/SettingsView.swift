@@ -485,109 +485,114 @@ struct ActionEditorView: View {
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isRecordingShortcut)
                     .animation(.spring(response: 0.3, dampingFraction: 0.7), value: recordedKeys)
 
-                    // Prompt editor with Enhance button inside
-                    VStack(spacing: 0) {
-                        ZStack(alignment: .topLeading) {
-                            if action.prompt.isEmpty {
-                                Text("Enter your prompt here")
-                                    .font(.nunitoRegularBold(size: 14))
-                                    .foregroundColor(textGrayColor.opacity(0.6))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                            }
+                    // Plugin info (only for plugins)
+                    if action.isPlugin, let pluginType = action.pluginType {
+                        PluginInfoView(pluginType: pluginType, inputBackgroundColor: inputBackgroundColor, textGrayColor: textGrayColor)
+                    } else {
+                        // Prompt editor with Enhance button inside (only for AI actions)
+                        VStack(spacing: 0) {
+                            ZStack(alignment: .topLeading) {
+                                if action.prompt.isEmpty {
+                                    Text("Enter your prompt here")
+                                        .font(.nunitoRegularBold(size: 14))
+                                        .foregroundColor(textGrayColor.opacity(0.6))
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 12)
+                                }
 
-                            TextEditor(text: $action.prompt)
-                                .font(.nunitoRegularBold(size: 14))
-                                .foregroundColor(textGrayColor)
-                                .scrollContentBackground(.hidden)
-                                .scrollDisabled(true)
-                                .background(Color.clear)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .onChange(of: action.prompt) { _, _ in
+                                TextEditor(text: $action.prompt)
+                                    .font(.nunitoRegularBold(size: 14))
+                                    .foregroundColor(textGrayColor)
+                                    .scrollContentBackground(.hidden)
+                                    .scrollDisabled(true)
+                                    .background(Color.clear)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .onChange(of: action.prompt) { _, _ in
+                                        hasUnsavedChanges = true
+                                    }
+                            }
+                            .frame(minHeight: 220)
+
+                            // Enhance button inside container
+                            HStack {
+                                Button(action: {
+                                    improvePromptWithAI()
+                                }) {
+                                    HStack(spacing: 5) {
+                                        ZStack {
+                                            if isImprovingPrompt {
+                                                ProgressView()
+                                                    .scaleEffect(0.6)
+                                            } else {
+                                                Image(systemName: "sparkles")
+                                                    .font(.system(size: 11))
+                                            }
+                                        }
+                                        .frame(width: 14, height: 14)
+
+                                        Text("Enhance")
+                                            .font(.system(size: 12, weight: .medium))
+                                    }
+                                    .foregroundColor(.primary)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(Color(NSColor.windowBackgroundColor))
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(action.prompt.isEmpty || isImprovingPrompt)
+
+                                Spacer()
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.bottom, 10)
+                        }
+                        .background(inputBackgroundColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+                        )
+
+                        // Web Search Toggle (only for AI actions)
+                        HStack {
+                            Toggle(isOn: Binding(
+                                get: { action.actionType == .webSearch },
+                                set: { newValue in
+                                    action.actionType = newValue ? .webSearch : .ai
                                     hasUnsavedChanges = true
                                 }
-                        }
-                        .frame(minHeight: 220)
-
-                        // Enhance button inside container
-                        HStack {
-                            Button(action: {
-                                improvePromptWithAI()
-                            }) {
-                                HStack(spacing: 5) {
-                                    ZStack {
-                                        if isImprovingPrompt {
-                                            ProgressView()
-                                                .scaleEffect(0.6)
-                                        } else {
-                                            Image(systemName: "sparkles")
-                                                .font(.system(size: 11))
-                                        }
+                            )) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "globe")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(action.actionType == .webSearch ? .accentColor : textGrayColor)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Web Search")
+                                            .font(.nunitoRegularBold(size: 14))
+                                            .foregroundColor(textGrayColor)
+                                        Text("Uses Perplexity to search the web for up-to-date information")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.secondary)
                                     }
-                                    .frame(width: 14, height: 14)
-
-                                    Text("Enhance")
-                                        .font(.system(size: 12, weight: .medium))
                                 }
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Color(NSColor.windowBackgroundColor))
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.gray.opacity(0.15), lineWidth: 1)
-                                )
                             }
-                            .buttonStyle(.plain)
-                            .disabled(action.prompt.isEmpty || isImprovingPrompt)
-
-                            Spacer()
+                            .toggleStyle(.switch)
                         }
                         .padding(.horizontal, 12)
-                        .padding(.bottom, 10)
+                        .padding(.vertical, 12)
+                        .background(inputBackgroundColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+                        )
                     }
-                    .background(inputBackgroundColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.15), lineWidth: 1)
-                    )
-
-                    // Web Search Toggle
-                    HStack {
-                        Toggle(isOn: Binding(
-                            get: { action.actionType == .webSearch },
-                            set: { newValue in
-                                action.actionType = newValue ? .webSearch : .ai
-                                hasUnsavedChanges = true
-                            }
-                        )) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "globe")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(action.actionType == .webSearch ? .accentColor : textGrayColor)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Web Search")
-                                        .font(.nunitoRegularBold(size: 14))
-                                        .foregroundColor(textGrayColor)
-                                    Text("Uses Perplexity to search the web for up-to-date information")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .toggleStyle(.switch)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 12)
-                    .background(inputBackgroundColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.15), lineWidth: 1)
-                    )
 
                     Spacer()
                 }
@@ -1278,6 +1283,118 @@ struct PluginCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.gray.opacity(0.15), lineWidth: 1)
         )
+    }
+}
+
+// MARK: - Plugin Info View (for action editor)
+
+struct PluginInfoView: View {
+    let pluginType: PluginType
+    let inputBackgroundColor: Color
+    let textGrayColor: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Plugin type badge
+            HStack {
+                Image(systemName: "puzzlepiece.extension.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.accentColor)
+                Text("Native Plugin")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.accentColor)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.accentColor.opacity(0.1))
+            .clipShape(Capsule())
+
+            // Plugin description
+            Text(pluginType.description)
+                .font(.nunitoRegularBold(size: 14))
+                .foregroundColor(textGrayColor)
+
+            // Plugin-specific info
+            VStack(alignment: .leading, spacing: 8) {
+                pluginSpecificInfo
+            }
+
+            // Category
+            HStack {
+                Text("Category:")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                Text(pluginType.category.rawValue)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(textGrayColor)
+            }
+
+            // Output type
+            HStack {
+                Text("Output:")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                Text(pluginType.outputsImage ? "Image" : "Text")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(textGrayColor)
+                if pluginType.outputsImage {
+                    Image(systemName: "photo")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(inputBackgroundColor)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    var pluginSpecificInfo: some View {
+        switch pluginType {
+        case .qrGenerator:
+            infoRow(icon: "qrcode", title: "Input", description: "Any text or URL to encode")
+        case .jsonFormatter:
+            infoRow(icon: "curlybraces", title: "Input", description: "Raw JSON to format and beautify")
+        case .base64Encode:
+            infoRow(icon: "arrow.right.circle", title: "Input", description: "Plain text to encode to Base64")
+        case .base64Decode:
+            infoRow(icon: "arrow.left.circle", title: "Input", description: "Base64 string to decode")
+        case .colorConverter:
+            infoRow(icon: "paintpalette", title: "Input", description: "HEX (#FF5733) or RGB (255, 87, 51)")
+        case .uuidGenerator:
+            infoRow(icon: "number.circle", title: "Input", description: "No input required - generates random UUID")
+        case .hashGenerator:
+            infoRow(icon: "lock.shield", title: "Input", description: "Text to generate MD5, SHA-256, SHA-512 hashes")
+        case .urlEncode:
+            infoRow(icon: "link", title: "Input", description: "Text with special characters to URL encode")
+        case .urlDecode:
+            infoRow(icon: "link.badge.plus", title: "Input", description: "URL encoded string to decode")
+        case .wordCount:
+            infoRow(icon: "textformat.123", title: "Input", description: "Text to count words, characters, lines")
+        }
+    }
+
+    func infoRow(icon: String, title: String, description: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(textGrayColor)
+                Text(description)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+        }
     }
 }
 
