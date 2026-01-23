@@ -1,0 +1,248 @@
+//
+//  OpenAIService.swift
+//  typo
+//
+
+import Foundation
+
+// MARK: - AI Provider
+
+enum AIProvider: String, CaseIterable, Codable {
+    case openai = "OpenAI"
+    case anthropic = "Anthropic"
+    case openrouter = "OpenRouter"
+    case perplexity = "Perplexity"
+    case groq = "Groq"
+
+    var baseURL: String {
+        switch self {
+        case .openai:
+            return "https://api.openai.com/v1/chat/completions"
+        case .anthropic:
+            return "https://api.anthropic.com/v1/messages"
+        case .openrouter:
+            return "https://openrouter.ai/api/v1/chat/completions"
+        case .perplexity:
+            return "https://api.perplexity.ai/chat/completions"
+        case .groq:
+            return "https://api.groq.com/openai/v1/chat/completions"
+        }
+    }
+
+    var defaultModel: String {
+        switch self {
+        case .openai:
+            return "gpt-4o-mini"
+        case .anthropic:
+            return "claude-3-5-sonnet-20241022"
+        case .openrouter:
+            return "anthropic/claude-3.5-sonnet"
+        case .perplexity:
+            return "llama-3.1-sonar-small-128k-online"
+        case .groq:
+            return "llama-3.1-70b-versatile"
+        }
+    }
+
+    var apiKeyPlaceholder: String {
+        switch self {
+        case .openai:
+            return "sk-..."
+        case .anthropic:
+            return "sk-ant-..."
+        case .openrouter:
+            return "sk-or-..."
+        case .perplexity:
+            return "pplx-..."
+        case .groq:
+            return "gsk_..."
+        }
+    }
+
+    var websiteURL: String {
+        switch self {
+        case .openai:
+            return "platform.openai.com/api-keys"
+        case .anthropic:
+            return "console.anthropic.com/settings/keys"
+        case .openrouter:
+            return "openrouter.ai/keys"
+        case .perplexity:
+            return "perplexity.ai/settings/api"
+        case .groq:
+            return "console.groq.com/keys"
+        }
+    }
+}
+
+// MARK: - AI Service
+
+class AIService {
+    static let shared = AIService()
+
+    func processText(prompt: String, text: String, apiKey: String, provider: AIProvider) async throws -> String {
+        guard !apiKey.isEmpty else {
+            return "[Demo Mode] API key not configured. Go to Settings to add your API key."
+        }
+
+        switch provider {
+        case .anthropic:
+            return try await callAnthropic(prompt: prompt, text: text, apiKey: apiKey)
+        default:
+            return try await callOpenAICompatible(prompt: prompt, text: text, apiKey: apiKey, provider: provider)
+        }
+    }
+
+    // MARK: - OpenAI Compatible APIs (OpenAI, OpenRouter, Perplexity, Groq)
+
+    private func callOpenAICompatible(prompt: String, text: String, apiKey: String, provider: AIProvider) async throws -> String {
+        let url = URL(string: provider.baseURL)!
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // OpenRouter requiere headers adicionales
+        if provider == .openrouter {
+            request.addValue("Typo App", forHTTPHeaderField: "X-Title")
+        }
+
+        let body: [String: Any] = [
+            "model": provider.defaultModel,
+            "messages": [
+                ["role": "system", "content": prompt],
+                ["role": "user", "content": text]
+            ],
+            "max_tokens": 2000,
+            "temperature": 0.7
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AIError.invalidResponse
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let errorResponse = try? JSONDecoder().decode(OpenAIErrorResponse.self, from: data) {
+                throw AIError.apiError(errorResponse.error.message)
+            }
+            throw AIError.httpError(httpResponse.statusCode)
+        }
+
+        let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+
+        guard let content = decoded.choices.first?.message.content else {
+            throw AIError.noContent
+        }
+
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Anthropic API
+
+    private func callAnthropic(prompt: String, text: String, apiKey: String) async throws -> String {
+        let url = URL(string: AIProvider.anthropic.baseURL)!
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "model": AIProvider.anthropic.defaultModel,
+            "max_tokens": 2000,
+            "system": prompt,
+            "messages": [
+                ["role": "user", "content": text]
+            ]
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AIError.invalidResponse
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let errorResponse = try? JSONDecoder().decode(AnthropicErrorResponse.self, from: data) {
+                throw AIError.apiError(errorResponse.error.message)
+            }
+            throw AIError.httpError(httpResponse.statusCode)
+        }
+
+        let decoded = try JSONDecoder().decode(AnthropicResponse.self, from: data)
+
+        guard let content = decoded.content.first?.text else {
+            throw AIError.noContent
+        }
+
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+// MARK: - Response Models
+
+struct OpenAIResponse: Codable {
+    let choices: [Choice]
+
+    struct Choice: Codable {
+        let message: Message
+    }
+
+    struct Message: Codable {
+        let content: String
+    }
+}
+
+struct OpenAIErrorResponse: Codable {
+    let error: ErrorDetail
+
+    struct ErrorDetail: Codable {
+        let message: String
+    }
+}
+
+struct AnthropicResponse: Codable {
+    let content: [ContentBlock]
+
+    struct ContentBlock: Codable {
+        let text: String
+    }
+}
+
+struct AnthropicErrorResponse: Codable {
+    let error: ErrorDetail
+
+    struct ErrorDetail: Codable {
+        let message: String
+    }
+}
+
+// MARK: - Errors
+
+enum AIError: LocalizedError {
+    case invalidResponse
+    case httpError(Int)
+    case apiError(String)
+    case noContent
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidResponse:
+            return "Invalid response from server"
+        case .httpError(let code):
+            return "HTTP error: \(code)"
+        case .apiError(let message):
+            return message
+        case .noContent:
+            return "No content in response"
+        }
+    }
+}
