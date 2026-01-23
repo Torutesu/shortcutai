@@ -294,18 +294,25 @@ struct ActionListRow: View {
             : Color.accentColor.opacity(0.1)
     }
 
+    // Adaptive gray: darker in light mode, lighter in dark mode
+    var textGrayColor: Color {
+        colorScheme == .light
+            ? Color(white: 0.35)
+            : Color(white: 0.65)
+    }
+
     var body: some View {
         HStack(spacing: 10) {
             // Icon
             Image(systemName: action.icon)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.gray)
+                .foregroundColor(textGrayColor)
                 .frame(width: 24)
 
             // Name
             Text(action.name.isEmpty ? "New Action" : action.name)
                 .font(.nunitoBold(size: 13))
-                .foregroundColor(action.name.isEmpty ? .secondary : .primary)
+                .foregroundColor(textGrayColor)
                 .lineLimit(1)
 
             Spacer()
@@ -342,6 +349,13 @@ struct ActionEditorView: View {
             : Color(NSColor.controlBackgroundColor)
     }
 
+    // Adaptive gray: darker in light mode, lighter in dark mode
+    var textGrayColor: Color {
+        colorScheme == .light
+            ? Color(white: 0.35)
+            : Color(white: 0.65)
+    }
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             VStack(spacing: 0) {
@@ -357,7 +371,7 @@ struct ActionEditorView: View {
                             }) {
                                 Image(systemName: action.icon)
                                     .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(textGrayColor)
                                     .frame(width: 36, height: 36)
                             }
                             .buttonStyle(.plain)
@@ -369,6 +383,7 @@ struct ActionEditorView: View {
                             })
                                 .textFieldStyle(.plain)
                                 .font(.nunitoBold(size: 22))
+                                .foregroundColor(textGrayColor)
                                 .scaleEffect(isNameFocused ? 1.05 : 1.0, anchor: .leading)
                                 .onChange(of: action.name) { _, _ in
                                     onSave(action)
@@ -428,7 +443,7 @@ struct ActionEditorView: View {
                             if action.prompt.isEmpty {
                                 Text("Enter your prompt here")
                                     .font(.system(size: 14))
-                                    .foregroundColor(Color.gray.opacity(0.5))
+                                    .foregroundColor(textGrayColor.opacity(0.6))
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
                             }
@@ -721,53 +736,91 @@ struct IconPickerView: View {
 
     // Icon list with more categories
     let icons: [String] = [
-        // Writing
+        // Writing & Text
         "pencil", "pencil.line", "highlighter", "scribble.variable", "signature", "text.cursor",
+        "pencil.tip", "pencil.and.outline", "square.and.pencil", "rectangle.and.pencil.and.ellipsis",
         // Communication
         "text.bubble", "bubble.left", "quote.bubble", "captions.bubble", "ellipsis.message", "phone",
-        // Hands
+        "message.fill", "envelope.fill", "paperplane.fill", "megaphone.fill",
+        // Hands - All gestures
         "hand.raised.fill", "hand.thumbsup.fill", "hand.thumbsdown.fill", "hand.point.right.fill", "hand.wave.fill", "hands.clap.fill",
-        // People
+        "hand.point.up.fill", "hand.point.up.left.fill", "hand.point.down.fill", "hand.point.left.fill",
+        "hand.draw.fill", "hand.tap.fill", "hand.point.up.braille.fill",
+        "hands.and.sparkles.fill",
+        // People & Figures
         "person.fill", "person.2.fill", "person.3.fill", "figure.stand", "figure.walk", "figure.run",
-        // Actions
+        "figure.wave", "figure.arms.open", "figure.2.arms.open", "figure.dance", "figure.martial.arts",
+        "person.crop.circle.fill", "person.badge.plus.fill", "person.badge.clock.fill",
+        // Actions & Magic
         "bolt.fill", "wand.and.stars", "sparkles", "star.fill", "heart.fill", "flame.fill",
-        // Documents
+        "wand.and.rays", "ant.fill", "ladybug.fill", "leaf.fill", "tornado", "wind",
+        // Documents & Lists
         "doc.text.fill", "doc.plaintext.fill", "list.bullet", "checklist", "bookmark.fill", "tag.fill",
-        // Ideas
+        "doc.richtext.fill", "doc.append.fill", "note.text", "list.clipboard.fill",
+        // Ideas & Mind
         "lightbulb.fill", "brain", "eye.fill", "face.smiling.fill", "moon.fill", "sun.max.fill",
-        // Tools
+        "brain.head.profile", "eyes", "mustache.fill", "mouth.fill", "nose.fill", "ear.fill",
+        // Tools & Work
         "gearshape.fill", "wrench.and.screwdriver.fill", "hammer.fill", "paintbrush.fill", "scissors", "waveform",
-        // Symbols
+        "briefcase.fill", "folder.fill", "archivebox.fill", "tray.full.fill", "externaldrive.fill",
+        // Symbols & Alerts
         "checkmark.circle.fill", "xmark.circle.fill", "exclamationmark.triangle.fill", "info.circle.fill", "questionmark.circle.fill", "bell.fill",
-        // Arrows
+        "flag.fill", "location.fill", "pin.fill", "mappin.circle.fill", "scope",
+        // Arrows & Movement
         "arrow.triangle.2.circlepath", "arrow.clockwise", "repeat", "shuffle", "arrow.up.circle.fill", "arrow.down.circle.fill",
-        // Objects
-        "cup.and.saucer.fill", "gift.fill", "bag.fill", "cart.fill", "creditcard.fill", "building.2.fill"
+        "arrow.left.arrow.right", "arrow.up.arrow.down", "arrow.uturn.backward", "arrow.uturn.forward",
+        // Objects & Things
+        "cup.and.saucer.fill", "gift.fill", "bag.fill", "cart.fill", "creditcard.fill", "building.2.fill",
+        "house.fill", "car.fill", "airplane", "bicycle", "bus.fill", "tram.fill",
+        // Media & Entertainment
+        "play.circle.fill", "pause.circle.fill", "music.note", "mic.fill", "camera.fill", "photo.fill",
+        "film.fill", "tv.fill", "gamecontroller.fill", "headphones",
+        // Nature & Weather
+        "cloud.fill", "cloud.rain.fill", "cloud.bolt.fill", "snowflake", "drop.fill", "thermometer.sun.fill",
+        // Tech & Devices
+        "desktopcomputer", "laptopcomputer", "iphone", "keyboard.fill", "printer.fill", "display",
+        // Health & Fitness
+        "heart.circle.fill", "cross.fill", "pills.fill", "bandage.fill", "stethoscope", "figure.yoga"
     ]
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            LazyVGrid(columns: Array(repeating: GridItem(.fixed(44), spacing: 6), count: 6), spacing: 6) {
-                ForEach(icons, id: \.self) { icon in
-                    IconButton(
-                        icon: icon,
-                        isSelected: selectedIcon == icon,
-                        isHovered: hoveredIcon == icon,
-                        colorScheme: colorScheme
-                    )
-                    .onTapGesture {
-                        onSelect(icon)
-                    }
-                    .onHover { hovering in
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            hoveredIcon = hovering ? icon : nil
+        ZStack(alignment: .bottom) {
+            ScrollView(showsIndicators: false) {
+                LazyVGrid(columns: Array(repeating: GridItem(.fixed(44), spacing: 6), count: 6), spacing: 6) {
+                    ForEach(icons, id: \.self) { icon in
+                        IconButton(
+                            icon: icon,
+                            isSelected: selectedIcon == icon,
+                            isHovered: hoveredIcon == icon,
+                            colorScheme: colorScheme
+                        )
+                        .onTapGesture {
+                            onSelect(icon)
+                        }
+                        .onHover { hovering in
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                hoveredIcon = hovering ? icon : nil
+                            }
                         }
                     }
                 }
+                .padding(12)
+                .padding(.bottom, 20)
             }
-            .padding(12)
+
+            // Fade gradient at bottom to indicate more content
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(NSColor.windowBackgroundColor).opacity(0),
+                    Color(NSColor.windowBackgroundColor)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 30)
+            .allowsHitTesting(false)
         }
-        .frame(width: 300, height: 220)
+        .frame(width: 320, height: 280)
         .background(Color(NSColor.windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
