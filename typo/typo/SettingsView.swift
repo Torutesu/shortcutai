@@ -41,8 +41,11 @@ struct SettingsView: View {
                 TabTextButton(title: "Actions", isSelected: selectedTab == 1) {
                     selectedTab = 1
                 }
-                TabTextButton(title: "About", isSelected: selectedTab == 2) {
+                TabTextButton(title: "Plugins", isSelected: selectedTab == 2) {
                     selectedTab = 2
+                }
+                TabTextButton(title: "About", isSelected: selectedTab == 3) {
+                    selectedTab = 3
                 }
             }
             .padding(.vertical, 12)
@@ -56,6 +59,8 @@ struct SettingsView: View {
             case 1:
                 ActionsSettingsView(selectedAction: $selectedAction)
             case 2:
+                PluginsMarketplaceView()
+            case 3:
                 AboutView()
             default:
                 EmptyView()
@@ -552,11 +557,17 @@ struct ActionEditorView: View {
 
                     // Web Search Toggle
                     HStack {
-                        Toggle(isOn: $action.isWebSearch) {
+                        Toggle(isOn: Binding(
+                            get: { action.actionType == .webSearch },
+                            set: { newValue in
+                                action.actionType = newValue ? .webSearch : .ai
+                                hasUnsavedChanges = true
+                            }
+                        )) {
                             HStack(spacing: 8) {
                                 Image(systemName: "globe")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(action.isWebSearch ? .accentColor : textGrayColor)
+                                    .foregroundColor(action.actionType == .webSearch ? .accentColor : textGrayColor)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Web Search")
                                         .font(.nunitoRegularBold(size: 14))
@@ -568,9 +579,6 @@ struct ActionEditorView: View {
                             }
                         }
                         .toggleStyle(.switch)
-                        .onChange(of: action.isWebSearch) { _, _ in
-                            hasUnsavedChanges = true
-                        }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
@@ -1084,6 +1092,192 @@ struct AboutView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+    }
+}
+
+// MARK: - Plugins Marketplace View
+
+struct PluginsMarketplaceView: View {
+    @Environment(\.colorScheme) var colorScheme
+    @StateObject private var store = ActionsStore.shared
+    @State private var selectedCategory: PluginCategory? = nil
+    @State private var searchText = ""
+
+    var filteredPlugins: [PluginType] {
+        var plugins = PluginType.allCases
+
+        if let category = selectedCategory {
+            plugins = plugins.filter { $0.category == category }
+        }
+
+        if !searchText.isEmpty {
+            plugins = plugins.filter {
+                $0.displayName.localizedCaseInsensitiveContains(searchText) ||
+                $0.description.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+
+        return plugins
+    }
+
+    var backgroundColor: Color {
+        colorScheme == .light
+            ? Color(red: 247/255, green: 247/255, blue: 245/255)
+            : Color(white: 0.12)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Plugins")
+                    .font(.nunitoBold(size: 20))
+
+                Spacer()
+
+                // Search
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("Search plugins...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .frame(width: 150)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.gray.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
+            .padding(.bottom, 12)
+
+            // Category Filter
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    CategoryPill(title: "All", isSelected: selectedCategory == nil) {
+                        selectedCategory = nil
+                    }
+
+                    ForEach(PluginCategory.allCases, id: \.self) { category in
+                        CategoryPill(title: category.rawValue, isSelected: selectedCategory == category) {
+                            selectedCategory = category
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+            .padding(.bottom, 16)
+
+            Divider()
+
+            // Plugins Grid
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    ForEach(filteredPlugins, id: \.self) { plugin in
+                        PluginCard(plugin: plugin, isInstalled: store.isPluginInstalled(plugin)) {
+                            if store.isPluginInstalled(plugin) {
+                                store.uninstallPlugin(plugin)
+                            } else {
+                                store.installPlugin(plugin)
+                            }
+                        }
+                    }
+                }
+                .padding(24)
+            }
+            .background(backgroundColor)
+        }
+    }
+}
+
+struct CategoryPill: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isSelected ? .white : .secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(isSelected ? Color.accentColor : Color.gray.opacity(0.15))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct PluginCard: View {
+    @Environment(\.colorScheme) var colorScheme
+    let plugin: PluginType
+    let isInstalled: Bool
+    let onToggle: () -> Void
+
+    var cardBackground: Color {
+        colorScheme == .light ? .white : Color(white: 0.18)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.accentColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: plugin.icon)
+                        .font(.system(size: 20))
+                        .foregroundColor(.accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(plugin.displayName)
+                        .font(.nunitoRegularBold(size: 14))
+                        .foregroundColor(.primary)
+
+                    Text(plugin.category.rawValue)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+            }
+
+            Text(plugin.description)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .lineLimit(2)
+
+            Spacer()
+
+            // Install/Uninstall Button
+            Button(action: onToggle) {
+                HStack {
+                    Image(systemName: isInstalled ? "checkmark" : "arrow.down.circle")
+                        .font(.system(size: 12, weight: .medium))
+                    Text(isInstalled ? "Installed" : "Install")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(isInstalled ? Color.green.opacity(0.15) : Color.accentColor.opacity(0.15))
+                .foregroundColor(isInstalled ? .green : .accentColor)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .frame(height: 160)
+        .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+        )
     }
 }
 

@@ -5,6 +5,7 @@
 
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 struct PopoverView: View {
     @StateObject private var store = ActionsStore.shared
@@ -13,6 +14,7 @@ struct PopoverView: View {
     @State private var selectedIndex = 0
     @State private var isProcessing = false
     @State private var resultText: String?
+    @State private var resultImage: NSImage?
     @State private var activeAction: Action?
     @State private var shouldScrollToSelection = false
     @FocusState private var isSearchFocused: Bool
@@ -34,8 +36,11 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if let result = resultText, let action = activeAction {
-                // Result view
+            if let image = resultImage, let action = activeAction {
+                // Image result view (for plugins like QR generator)
+                imageResultView(image: image, action: action)
+            } else if let result = resultText, let action = activeAction {
+                // Text result view
                 resultView(result: result, action: action)
             } else if isProcessing, let action = activeAction {
                 // Loading view with skeleton
@@ -310,6 +315,12 @@ struct PopoverView: View {
                         .foregroundColor(.secondary)
                 }
 
+                if action.isPlugin {
+                    Image(systemName: "puzzlepiece.extension")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
                 Spacer()
 
                 Button(action: {
@@ -366,7 +377,7 @@ struct PopoverView: View {
                     }
                     .buttonStyle(.bordered)
 
-                    if !action.isWebSearch {
+                    if !action.isWebSearch && !action.isPlugin {
                         Button("Replace") {
                             replaceOriginalText(with: result)
                         }
@@ -389,6 +400,101 @@ struct PopoverView: View {
         }
     }
 
+    // MARK: - Image Result View (for plugins like QR generator)
+
+    func imageResultView(image: NSImage, action: Action) -> some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text(action.name)
+                    .font(.nunitoRegularBold(size: 13))
+                    .foregroundColor(.accentColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.accentColor.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                Image(systemName: "puzzlepiece.extension")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button(action: {
+                    resultImage = nil
+                    activeAction = nil
+                    if initialAction != nil {
+                        onClose()
+                    }
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(16)
+
+            Divider()
+
+            // Image content
+            VStack {
+                Spacer()
+
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.none)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 280, maxHeight: 280)
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(20)
+
+            Divider()
+
+            // Footer with buttons
+            HStack {
+                HStack(spacing: 4) {
+                    KeyboardKey("esc")
+                    Text("close")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                HStack(spacing: 8) {
+                    Button("Copy") {
+                        copyImageToClipboard(image)
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("Save") {
+                        saveImage(image)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color(NSColor.controlBackgroundColor))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onKeyPress(.escape) {
+            resultImage = nil
+            activeAction = nil
+            if initialAction != nil {
+                onClose()
+            }
+            return .handled
+        }
+    }
+
     // MARK: - Actions
 
     func selectCurrentAction() {
@@ -402,7 +508,10 @@ struct PopoverView: View {
     func executeAction(_ action: Action) {
         let textToProcess = textManager.capturedText
 
-        guard !textToProcess.isEmpty else {
+        // UUID generator doesn't need input text
+        let needsInput = action.pluginType != .uuidGenerator
+
+        guard !textToProcess.isEmpty || !needsInput else {
             resultText = "No text selected. Select some text first!"
             activeAction = action
             return
@@ -410,7 +519,26 @@ struct PopoverView: View {
 
         isProcessing = true
         activeAction = action
+        resultImage = nil
+        resultText = nil
 
+        // Handle plugins
+        if action.isPlugin, let pluginType = action.pluginType {
+            let pluginResult = PluginProcessor.shared.process(pluginType: pluginType, input: textToProcess)
+
+            switch pluginResult {
+            case .text(let text):
+                resultText = text
+            case .image(let image):
+                resultImage = image
+            case .error(let error):
+                resultText = "Error: \(error)"
+            }
+            isProcessing = false
+            return
+        }
+
+        // Handle AI actions
         Task {
             do {
                 let result: String
@@ -471,6 +599,28 @@ struct PopoverView: View {
             // Post events
             vDown?.post(tap: .cgSessionEventTap)
             vUp?.post(tap: .cgSessionEventTap)
+        }
+    }
+
+    func copyImageToClipboard(_ image: NSImage) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.writeObjects([image])
+    }
+
+    func saveImage(_ image: NSImage) {
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.png]
+        savePanel.nameFieldStringValue = "image.png"
+        savePanel.canCreateDirectories = true
+
+        savePanel.begin { response in
+            if response == .OK, let url = savePanel.url {
+                if let tiffData = image.tiffRepresentation,
+                   let bitmapRep = NSBitmapImageRep(data: tiffData),
+                   let pngData = bitmapRep.representation(using: .png, properties: [:]) {
+                    try? pngData.write(to: url)
+                }
+            }
         }
     }
 }
