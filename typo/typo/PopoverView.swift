@@ -19,6 +19,7 @@ struct PopoverView: View {
 
     var onClose: () -> Void
     var onOpenSettings: () -> Void
+    var initialAction: Action?
 
     var filteredActions: [Action] {
         if searchText.isEmpty {
@@ -27,17 +28,24 @@ struct PopoverView: View {
         return store.actions.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
 
+    var popoverWidth: CGFloat {
+        initialAction != nil ? 560 : 320
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             if let result = resultText, let action = activeAction {
                 // Result view
                 resultView(result: result, action: action)
-            } else {
-                // Main popup view
+            } else if isProcessing, let action = activeAction {
+                // Loading view with skeleton
+                loadingView(action: action)
+            } else if initialAction == nil {
+                // Main popup view (only when no initial action)
                 mainView
             }
         }
-        .frame(width: 320)
+        .frame(width: popoverWidth)
         .background(Color(NSColor.windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
@@ -45,6 +53,13 @@ struct PopoverView: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+        .onAppear {
+            if let action = initialAction {
+                activeAction = action
+                isProcessing = true
+                executeAction(action)
+            }
+        }
     }
 
     // MARK: - Main View
@@ -163,7 +178,119 @@ struct PopoverView: View {
         }
     }
 
-    // MARK: - Result View
+    // MARK: - Loading View (Action Popup)
+
+    func loadingView(action: Action) -> some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text(action.name)
+                    .font(.nunitoRegularBold(size: 13))
+                    .foregroundColor(.accentColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.accentColor.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                Spacer()
+
+                Button(action: {
+                    isProcessing = false
+                    activeAction = nil
+                    onClose()
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(16)
+
+            Divider()
+
+            // Skeleton text area - expands to fill available space
+            VStack(alignment: .leading, spacing: 14) {
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: .infinity)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: .infinity)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: 420)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: .infinity)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: 380)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: .infinity)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: 320)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: .infinity)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: 400)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: .infinity)
+
+                ShimmerView()
+                    .frame(height: 14)
+                    .frame(maxWidth: 280)
+
+                Spacer()
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            Divider()
+
+            // Footer
+            HStack {
+                HStack(spacing: 4) {
+                    KeyboardKey("esc")
+                    Text("cancel")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text("Processing...")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color(NSColor.controlBackgroundColor))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onKeyPress(.escape) {
+            isProcessing = false
+            activeAction = nil
+            onClose()
+            return .handled
+        }
+    }
+
+    // MARK: - Result View (Action Popup)
 
     func resultView(result: String, action: Action) -> some View {
         VStack(spacing: 0) {
@@ -182,6 +309,9 @@ struct PopoverView: View {
                 Button(action: {
                     resultText = nil
                     activeAction = nil
+                    if initialAction != nil {
+                        onClose()
+                    }
                 }) {
                     Image(systemName: "xmark")
                         .font(.system(size: 12, weight: .medium))
@@ -193,16 +323,16 @@ struct PopoverView: View {
 
             Divider()
 
-            // Result content
+            // Result content - expands to fill available space
             ScrollView {
                 Text(result)
                     .font(.system(size: 14))
-                    .lineSpacing(4)
+                    .lineSpacing(6)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(16)
+                    .padding(20)
             }
-            .frame(maxHeight: 250)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             Divider()
 
@@ -210,7 +340,7 @@ struct PopoverView: View {
             HStack {
                 HStack(spacing: 4) {
                     KeyboardKey("esc")
-                    Text("back")
+                    Text("close")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
@@ -244,9 +374,13 @@ struct PopoverView: View {
             }
             .padding(16)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onKeyPress(.escape) {
             resultText = nil
             activeAction = nil
+            if initialAction != nil {
+                onClose()
+            }
             return .handled
         }
     }
@@ -426,6 +560,44 @@ struct NewActionRow: View {
     }
 }
 
+// MARK: - Shimmer View
+
+struct ShimmerView: View {
+    @State private var isAnimating = false
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 4)
+            .fill(Color.gray.opacity(0.2))
+            .overlay(
+                GeometryReader { geometry in
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color.clear,
+                                    Color.white.opacity(0.4),
+                                    Color.clear
+                                ]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: geometry.size.width * 0.6)
+                        .offset(x: isAnimating ? geometry.size.width : -geometry.size.width * 0.6)
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .onAppear {
+                withAnimation(
+                    Animation.linear(duration: 1.2)
+                        .repeatForever(autoreverses: false)
+                ) {
+                    isAnimating = true
+                }
+            }
+    }
+}
+
 // MARK: - Keyboard Key
 
 struct KeyboardKey: View {
@@ -451,6 +623,6 @@ struct KeyboardKey: View {
 }
 
 #Preview {
-    PopoverView(onClose: {}, onOpenSettings: {})
+    PopoverView(onClose: {}, onOpenSettings: {}, initialAction: nil)
         .frame(height: 420)
 }

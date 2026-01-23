@@ -44,16 +44,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var eventMonitor: Any?
     var localEventMonitor: Any?
     var hotKeyRef: EventHotKeyRef?
+    var actionHotKeyRefs: [EventHotKeyRef?] = []
+    var pendingAction: Action?
+    var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         globalAppDelegate = self
         registerCustomFonts()
         setupMenuBar()
         setupGlobalHotkey()
+        setupActionHotkeys()
         setupLocalEscapeMonitor()
 
         // Ocultar del dock (solo menu bar)
         NSApp.setActivationPolicy(.accessory)
+
+        // Observar cambios en las acciones para re-registrar hotkeys
+        ActionsStore.shared.$actions
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.setupActionHotkeys()
+            }
+            .store(in: &cancellables)
     }
 
     func registerCustomFonts() {
@@ -152,16 +164,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeyID.signature = OSType(0x5459504F) // "TYPO"
         hotKeyID.id = 1
 
-        var eventType = EventTypeSpec()
-        eventType.eventClass = OSType(kEventClassKeyboard)
-        eventType.eventKind = UInt32(kEventHotKeyPressed)
-
-        // Instalar el handler
-        InstallEventHandler(GetApplicationEventTarget(), { (_, event, _) -> OSStatus in
-            globalAppDelegate?.showPopover()
-            return noErr
-        }, 1, &eventType, nil, nil)
-
         // Registrar Cmd + Shift + T
         let modifiers = UInt32(cmdKey | shiftKey)
         let keyCode = UInt32(17) // T key
@@ -169,6 +171,107 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
 
         print("Hotkey registered: Cmd + Shift + T")
+    }
+
+    func setupActionHotkeys() {
+        // Desregistrar hotkeys anteriores
+        for hotKeyRef in actionHotKeyRefs {
+            if let ref = hotKeyRef {
+                UnregisterEventHotKey(ref)
+            }
+        }
+        actionHotKeyRefs.removeAll()
+
+        let actions = ActionsStore.shared.actions
+        let modifiers = UInt32(cmdKey | shiftKey)
+
+        for (index, action) in actions.enumerated() {
+            guard !action.shortcut.isEmpty,
+                  let keyCode = keyCodeForCharacter(action.shortcut.uppercased()) else {
+                continue
+            }
+
+            var hotKeyID = EventHotKeyID()
+            hotKeyID.signature = OSType(0x5459504F) // "TYPO"
+            hotKeyID.id = UInt32(index + 100) // IDs 100+ para acciones
+
+            var hotKeyRef: EventHotKeyRef?
+            let status = RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+
+            if status == noErr {
+                actionHotKeyRefs.append(hotKeyRef)
+                print("Action hotkey registered: Cmd + Shift + \(action.shortcut) for '\(action.name)'")
+            }
+        }
+
+        // Instalar handler global para hotkeys de acciones
+        var eventType = EventTypeSpec()
+        eventType.eventClass = OSType(kEventClassKeyboard)
+        eventType.eventKind = UInt32(kEventHotKeyPressed)
+
+        InstallEventHandler(GetApplicationEventTarget(), { (_, event, _) -> OSStatus in
+            var hotKeyID = EventHotKeyID()
+            GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
+
+            if hotKeyID.id == 1 {
+                // Main popup hotkey
+                globalAppDelegate?.pendingAction = nil
+                globalAppDelegate?.showPopover()
+            } else if hotKeyID.id >= 100 {
+                // Action hotkey
+                let actionIndex = Int(hotKeyID.id - 100)
+                let actions = ActionsStore.shared.actions
+                if actionIndex < actions.count {
+                    globalAppDelegate?.pendingAction = actions[actionIndex]
+                    globalAppDelegate?.showPopoverWithAction()
+                }
+            }
+
+            return noErr
+        }, 1, &eventType, nil, nil)
+    }
+
+    func keyCodeForCharacter(_ char: String) -> UInt32? {
+        let keyMap: [String: UInt32] = [
+            "A": 0, "S": 1, "D": 2, "F": 3, "H": 4, "G": 5, "Z": 6, "X": 7,
+            "C": 8, "V": 9, "B": 11, "Q": 12, "W": 13, "E": 14, "R": 15,
+            "Y": 16, "T": 17, "1": 18, "2": 19, "3": 20, "4": 21, "6": 22,
+            "5": 23, "=": 24, "9": 25, "7": 26, "-": 27, "8": 28, "0": 29,
+            "]": 30, "O": 31, "U": 32, "[": 33, "I": 34, "P": 35, "L": 37,
+            "J": 38, "'": 39, "K": 40, ";": 41, "\\": 42, ",": 43, "/": 44,
+            "N": 45, "M": 46, ".": 47
+        ]
+        return keyMap[char]
+    }
+
+    func showPopoverWithAction() {
+        // Capturar texto seleccionado antes de mostrar el popup
+        captureSelectedText()
+
+        // Recrear la ventana con la acción pendiente
+        popoverWindow = nil
+        createPopoverWindow(withAction: pendingAction)
+
+        // Posicionar cerca del cursor o centro de pantalla - ventana más grande para acciones
+        if let screen = NSScreen.main {
+            let screenRect = screen.visibleFrame
+            let windowWidth: CGFloat = 560
+            let windowHeight: CGFloat = 600
+            let x = (screenRect.width - windowWidth) / 2 + screenRect.minX
+            let y = (screenRect.height - windowHeight) / 2 + screenRect.minY
+
+            popoverWindow?.setFrame(NSRect(x: x, y: y, width: windowWidth, height: windowHeight), display: true)
+        }
+
+        popoverWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        // Cerrar al hacer click fuera
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.hidePopover()
+        }
+
+        pendingAction = nil
     }
 
     @objc func togglePopover() {
@@ -247,16 +350,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    func createPopoverWindow() {
+    func createPopoverWindow(withAction action: Action? = nil) {
         let contentView = PopoverView(onClose: { [weak self] in
             self?.hidePopover()
         }, onOpenSettings: { [weak self] in
             self?.hidePopover()
             self?.openSettings()
-        })
+        }, initialAction: action)
+
+        // Tamaño más grande para acciones directas
+        let width: CGFloat = action != nil ? 560 : 320
+        let height: CGFloat = action != nil ? 600 : 460
 
         let panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 320, height: 460),
+            contentRect: NSRect(x: 0, y: 0, width: width, height: height),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
