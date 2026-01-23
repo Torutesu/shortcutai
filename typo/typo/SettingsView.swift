@@ -135,61 +135,108 @@ struct ActionsSettingsView: View {
     @Binding var selectedAction: Action?
 
     var body: some View {
-        HSplitView {
+        HStack(spacing: 0) {
             // Sidebar - Actions list
             VStack(alignment: .leading, spacing: 0) {
-                List(selection: $selectedAction) {
-                    ForEach(store.actions) { action in
-                        HStack(spacing: 10) {
-                            Image(systemName: action.icon)
-                                .foregroundColor(.accentColor)
-                                .frame(width: 20)
-                            Text(action.name)
+                ScrollView {
+                    VStack(spacing: 2) {
+                        ForEach(store.actions) { action in
+                            ActionListRow(
+                                action: action,
+                                isSelected: selectedAction?.id == action.id
+                            )
+                            .onTapGesture {
+                                selectedAction = action
+                            }
                         }
-                        .tag(action)
-                        .padding(.vertical, 4)
                     }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
                 }
-                .listStyle(.sidebar)
 
                 Divider()
 
-                HStack {
-                    Button(action: addNewAction) {
-                        Image(systemName: "plus")
-                    }
-                    .buttonStyle(.borderless)
-
-                    Button(action: deleteSelectedAction) {
-                        Image(systemName: "minus")
-                    }
-                    .buttonStyle(.borderless)
-                    .disabled(selectedAction == nil)
-
-                    Spacer()
+                // New Action button
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("New Action")
+                        .font(.system(size: 13, weight: .medium))
                 }
-                .padding(8)
+                .foregroundColor(.accentColor)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 16)
+                .onTapGesture {
+                    addNewAction()
+                }
             }
-            .frame(minWidth: 180, maxWidth: 200)
+            .frame(width: 180)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
 
-            // Editor
+            Divider()
+
+            // Editor or Empty State
             if let action = selectedAction {
-                ActionEditorView(action: action) { updatedAction in
-                    store.updateAction(updatedAction)
-                    selectedAction = updatedAction
-                }
-                .id(action.id) // Forzar recreación cuando cambia la acción
+                ActionEditorView(
+                    action: action,
+                    onSave: { updatedAction in
+                        store.updateAction(updatedAction)
+                        selectedAction = updatedAction
+                    },
+                    onDelete: {
+                        deleteSelectedAction()
+                    }
+                )
+                .id(action.id)
             } else {
-                VStack {
-                    Text("Select an action to edit")
-                        .foregroundColor(.secondary)
+                // Empty state with dot pattern background
+                ZStack {
+                    // Dot pattern background (canvas style)
+                    DotPatternView()
+
+                    VStack(spacing: 24) {
+                        // Command icon - 3D style like keyboard key
+                        Keyboard3DKeyLarge()
+
+                        VStack(spacing: 10) {
+                            Text("No Action Selected")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.primary)
+
+                            Text("Start by creating a new action or select an\nexisting one from the list.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .lineSpacing(2)
+                        }
+
+                        // New Action button - Duolingo 3D style
+                        Button(action: {
+                            addNewAction()
+                        }) {
+                            Text("New Action")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 40)
+                                .padding(.vertical, 12)
+                                .background(
+                                    ZStack {
+                                        // Bottom layer (3D effect) - darker blue
+                                        RoundedRectangle(cornerRadius: 22)
+                                            .fill(Color(red: 0.0, green: 0.45, blue: 0.8))
+                                            .offset(y: 4)
+
+                                        // Top layer - #0095ff
+                                        RoundedRectangle(cornerRadius: 22)
+                                            .fill(Color(red: 0.0, green: 0.584, blue: 1.0))
+                                    }
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-        .onAppear {
-            if selectedAction == nil, let first = store.actions.first {
-                selectedAction = first
+                .background(Color(NSColor.windowBackgroundColor))
             }
         }
     }
@@ -208,8 +255,55 @@ struct ActionsSettingsView: View {
     func deleteSelectedAction() {
         if let action = selectedAction {
             store.deleteAction(action)
-            selectedAction = store.actions.first
+            selectedAction = nil
         }
+    }
+}
+
+// MARK: - Action List Row
+
+struct ActionListRow: View {
+    let action: Action
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            // Drag dots
+            VStack(spacing: 2) {
+                ForEach(0..<3, id: \.self) { _ in
+                    HStack(spacing: 2) {
+                        Circle()
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: 3, height: 3)
+                        Circle()
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: 3, height: 3)
+                    }
+                }
+            }
+            .opacity(0.6)
+
+            // Icon
+            Image(systemName: action.icon)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .frame(width: 20)
+
+            // Name
+            Text(action.name.isEmpty ? "New Action" : action.name)
+                .font(.system(size: 13))
+                .foregroundColor(action.name.isEmpty ? .secondary : .primary)
+                .lineLimit(1)
+
+            Spacer()
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? Color.accentColor.opacity(0.1) : Color.clear)
+        )
+        .contentShape(Rectangle())
     }
 }
 
@@ -218,6 +312,7 @@ struct ActionsSettingsView: View {
 struct ActionEditorView: View {
     @State var action: Action
     var onSave: (Action) -> Void
+    var onDelete: () -> Void
 
     @State private var isRecordingShortcut = false
     @State private var isImprovingPrompt = false
@@ -258,6 +353,17 @@ struct ActionEditorView: View {
                         .onChange(of: action.name) { _, _ in
                             onSave(action)
                         }
+
+                    Spacer()
+
+                    // Delete button
+                    Button(action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14))
+                            .foregroundColor(.red)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Delete Action")
                 }
 
                 Divider()
@@ -267,17 +373,18 @@ struct ActionEditorView: View {
                     Text("Keyboard Shortcut")
                         .font(.headline)
 
-                    HStack {
-                        Text("⌘ +")
-                            .foregroundColor(.secondary)
+                    HStack(spacing: 8) {
+                        // Command key - 3D style
+                        Keyboard3DKey(text: "⌘")
 
-                        TextField("Key", text: $action.shortcut)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 60)
-                            .onChange(of: action.shortcut) { _, newValue in
-                                action.shortcut = newValue.uppercased().prefix(1).description
-                                onSave(action)
-                            }
+                        Text("+")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 14, weight: .medium))
+
+                        // Editable key - 3D style
+                        Keyboard3DKeyEditable(text: $action.shortcut, onSave: {
+                            onSave(action)
+                        })
 
                         Spacer()
                     }
@@ -443,6 +550,131 @@ struct AboutView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+    }
+}
+
+// MARK: - 3D Keyboard Key
+
+struct Keyboard3DKey: View {
+    @Environment(\.colorScheme) var colorScheme
+    let text: String
+
+    var body: some View {
+        ZStack {
+            // Bottom layer (3D effect)
+            RoundedRectangle(cornerRadius: 8)
+                .fill(colorScheme == .dark ? Color(white: 0.25) : Color(white: 0.7))
+                .frame(width: 36, height: 36)
+                .offset(y: 3)
+
+            // Top layer
+            RoundedRectangle(cornerRadius: 8)
+                .fill(colorScheme == .dark ? Color.white : Color(white: 0.95))
+                .frame(width: 36, height: 36)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(colorScheme == .dark ? 0 : 0.3), lineWidth: 1)
+                )
+
+            Text(text)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.black)
+        }
+        .frame(width: 36, height: 39)
+    }
+}
+
+// MARK: - 3D Keyboard Key Large (for empty state)
+
+struct Keyboard3DKeyLarge: View {
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        ZStack {
+            // Bottom layer (3D effect)
+            RoundedRectangle(cornerRadius: 14)
+                .fill(colorScheme == .dark ? Color(white: 0.25) : Color(white: 0.7))
+                .frame(width: 64, height: 64)
+                .offset(y: 4)
+
+            // Top layer
+            RoundedRectangle(cornerRadius: 14)
+                .fill(colorScheme == .dark ? Color.white : Color(white: 0.95))
+                .frame(width: 64, height: 64)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.gray.opacity(colorScheme == .dark ? 0 : 0.3), lineWidth: 1)
+                )
+
+            Image(systemName: "command")
+                .font(.system(size: 28, weight: .regular))
+                .foregroundColor(Color(white: 0.35))
+        }
+        .frame(width: 64, height: 68)
+    }
+}
+
+// MARK: - 3D Keyboard Key Editable
+
+struct Keyboard3DKeyEditable: View {
+    @Environment(\.colorScheme) var colorScheme
+    @Binding var text: String
+    var onSave: () -> Void
+
+    var body: some View {
+        ZStack {
+            // Bottom layer (3D effect)
+            RoundedRectangle(cornerRadius: 8)
+                .fill(colorScheme == .dark ? Color(white: 0.25) : Color(white: 0.7))
+                .frame(width: 44, height: 36)
+                .offset(y: 3)
+
+            // Top layer
+            RoundedRectangle(cornerRadius: 8)
+                .fill(colorScheme == .dark ? Color.white : Color(white: 0.95))
+                .frame(width: 44, height: 36)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(colorScheme == .dark ? 0 : 0.3), lineWidth: 1)
+                )
+
+            TextField("", text: $text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.black)
+                .multilineTextAlignment(.center)
+                .frame(width: 44, height: 36)
+                .onChange(of: text) { _, newValue in
+                    text = newValue.uppercased().prefix(1).description
+                    onSave()
+                }
+        }
+        .frame(width: 44, height: 39)
+    }
+}
+
+// MARK: - Dot Pattern Background
+
+struct DotPatternView: View {
+    let dotSize: CGFloat = 2
+    let spacing: CGFloat = 20
+
+    var body: some View {
+        GeometryReader { geometry in
+            let columns = Int(geometry.size.width / spacing) + 1
+            let rows = Int(geometry.size.height / spacing) + 1
+
+            Canvas { context, size in
+                for row in 0..<rows {
+                    for col in 0..<columns {
+                        let x = CGFloat(col) * spacing
+                        let y = CGFloat(row) * spacing
+                        let rect = CGRect(x: x - dotSize/2, y: y - dotSize/2, width: dotSize, height: dotSize)
+                        context.fill(Circle().path(in: rect), with: .color(Color.gray.opacity(0.15)))
+                    }
+                }
+            }
+        }
     }
 }
 
