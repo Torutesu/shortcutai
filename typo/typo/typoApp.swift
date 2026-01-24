@@ -55,6 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupGlobalHotkey()
         setupActionHotkeys()
         setupLocalEscapeMonitor()
+        setupColorPickerResultObserver()
 
         // Ocultar del dock (solo menu bar)
         NSApp.setActivationPolicy(.accessory)
@@ -66,6 +67,69 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.setupActionHotkeys()
             }
             .store(in: &cancellables)
+    }
+
+    func setupColorPickerResultObserver() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ShowColorPickerResult"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let result = notification.userInfo?["result"] as? String,
+                  let action = notification.userInfo?["action"] as? Action else {
+                return
+            }
+
+            // Store the result and show popup with it
+            self?.showColorPickerResult(result: result, action: action)
+        }
+    }
+
+    func showColorPickerResult(result: String, action: Action) {
+        // Create a special popup to show the color result
+        popoverWindow = nil
+
+        let contentView = ColorPickerResultView(
+            result: result,
+            action: action,
+            onClose: { [weak self] in
+                self?.hidePopover()
+            }
+        )
+
+        let panel = KeyablePanel(
+            contentRect: NSRect(x: 0, y: 0, width: 380, height: 380),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.level = .floating
+        panel.contentView = NSHostingView(rootView: contentView)
+        panel.hasShadow = true
+        panel.isFloatingPanel = true
+        panel.becomesKeyOnlyIfNeeded = false
+
+        // Position center of screen
+        if let screen = NSScreen.main {
+            let screenRect = screen.visibleFrame
+            let windowWidth: CGFloat = 380
+            let windowHeight: CGFloat = 380
+            let x = (screenRect.width - windowWidth) / 2 + screenRect.minX
+            let y = (screenRect.height - windowHeight) / 2 + screenRect.minY
+            panel.setFrame(NSRect(x: x, y: y, width: windowWidth, height: windowHeight), display: true)
+        }
+
+        popoverWindow = panel
+        popoverWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        // Close on click outside
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.hidePopover()
+        }
     }
 
     func registerCustomFonts() {

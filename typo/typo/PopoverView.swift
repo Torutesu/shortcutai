@@ -875,6 +875,40 @@ struct PopoverView: View {
             return
         }
 
+        // Check if plugin requires color picker
+        if action.isPlugin, let pluginType = action.pluginType, pluginType.requiresColorPicker {
+            activeAction = action
+            isProcessing = true
+            // Close popup temporarily to allow color picking
+            onClose()
+
+            // Small delay to ensure popup closes before showing color sampler
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                PluginProcessor.shared.pickColorFromScreen { result in
+                    DispatchQueue.main.async {
+                        switch result {
+                        case .text(let text):
+                            // Re-open popup with result
+                            self.resultText = text
+                            self.isProcessing = false
+                            // Post notification to reopen with result
+                            NotificationCenter.default.post(
+                                name: NSNotification.Name("ShowColorPickerResult"),
+                                object: nil,
+                                userInfo: ["result": text, "action": action]
+                            )
+                        case .error(let error):
+                            self.resultText = "Error: \(error)"
+                            self.isProcessing = false
+                        default:
+                            break
+                        }
+                    }
+                }
+            }
+            return
+        }
+
         // Check if text input is needed
         let needsInput = action.pluginType?.requiresTextInput ?? true
 
@@ -1517,6 +1551,140 @@ struct KeyboardKey: View {
                 RoundedRectangle(cornerRadius: 4)
                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
             )
+    }
+}
+
+// MARK: - Color Picker Result View
+
+struct ColorPickerResultView: View {
+    let result: String
+    let action: Action
+    var onClose: () -> Void
+
+    var extractedColor: NSColor? {
+        // Parse HEX from result
+        let lines = result.components(separatedBy: "\n")
+        for line in lines {
+            if line.hasPrefix("HEX: ") {
+                let hex = String(line.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+                return colorFromHex(hex)
+            }
+        }
+        return nil
+    }
+
+    func colorFromHex(_ hex: String) -> NSColor? {
+        var cleanHex = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        cleanHex = cleanHex.replacingOccurrences(of: "#", with: "")
+
+        guard cleanHex.count == 6, let hexValue = Int(cleanHex, radix: 16) else {
+            return nil
+        }
+
+        let r = CGFloat((hexValue >> 16) & 0xFF) / 255.0
+        let g = CGFloat((hexValue >> 8) & 0xFF) / 255.0
+        let b = CGFloat(hexValue & 0xFF) / 255.0
+
+        return NSColor(red: r, green: g, blue: b, alpha: 1.0)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text(action.name)
+                    .font(.nunitoRegularBold(size: 13))
+                    .foregroundColor(.accentColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.accentColor.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                Image(systemName: "puzzlepiece.extension")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(16)
+
+            Divider()
+
+            // Color preview and values
+            VStack(spacing: 16) {
+                // Large color preview
+                if let color = extractedColor {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(color))
+                        .frame(width: 120, height: 120)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                }
+
+                // Color values
+                Text(result)
+                    .font(.system(size: 13, design: .monospaced))
+                    .lineSpacing(6)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+            }
+            .padding(.vertical, 20)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            Divider()
+
+            // Footer with buttons
+            HStack {
+                HStack(spacing: 4) {
+                    KeyboardKey("esc")
+                    Text("close")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                HStack(spacing: 8) {
+                    Button("Copy All") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(result, forType: .string)
+                    }
+                    .buttonStyle(.bordered)
+
+                    // Copy just HEX
+                    if let hexLine = result.components(separatedBy: "\n").first(where: { $0.hasPrefix("HEX:") }) {
+                        let hex = String(hexLine.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+                        Button("Copy HEX") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(hex, forType: .string)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color(NSColor.controlBackgroundColor))
+        }
+        .frame(width: 380, height: 380)
+        .background(Color(NSColor.windowBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
     }
 }
 

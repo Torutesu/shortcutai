@@ -1379,6 +1379,8 @@ struct PluginInfoView: View {
             infoRow(icon: "textformat.123", title: "Input", description: "Text to count words, characters, lines")
         case .imageConverter:
             infoRow(icon: "photo.on.rectangle.angled", title: "Input", description: "Copy an image to clipboard, then run this action")
+        case .colorPicker:
+            infoRow(icon: "eyedropper", title: "Input", description: "No input required - click anywhere on screen to pick a color")
         }
     }
 

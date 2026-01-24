@@ -28,6 +28,7 @@ enum PluginType: String, Codable, CaseIterable {
     case urlDecode = "urlDecode"
     case wordCount = "wordCount"
     case imageConverter = "imageConverter"
+    case colorPicker = "colorPicker"
 
     var displayName: String {
         switch self {
@@ -42,6 +43,7 @@ enum PluginType: String, Codable, CaseIterable {
         case .urlDecode: return "URL Decode"
         case .wordCount: return "Word Count"
         case .imageConverter: return "Image Converter"
+        case .colorPicker: return "Color Picker"
         }
     }
 
@@ -58,6 +60,7 @@ enum PluginType: String, Codable, CaseIterable {
         case .urlDecode: return "URL decode text"
         case .wordCount: return "Count words, characters, lines"
         case .imageConverter: return "Convert images between PNG, JPEG, WEBP, TIFF"
+        case .colorPicker: return "Pick any color from your screen with an eyedropper"
         }
     }
 
@@ -74,6 +77,7 @@ enum PluginType: String, Codable, CaseIterable {
         case .urlDecode: return "link.badge.plus"
         case .wordCount: return "textformat.123"
         case .imageConverter: return "photo.on.rectangle.angled"
+        case .colorPicker: return "eyedropper"
         }
     }
 
@@ -88,6 +92,7 @@ enum PluginType: String, Codable, CaseIterable {
         case .urlEncode, .urlDecode: return .encoders
         case .wordCount: return .utilities
         case .imageConverter: return .converters
+        case .colorPicker: return .utilities
         }
     }
 
@@ -110,8 +115,16 @@ enum PluginType: String, Codable, CaseIterable {
     // Whether the plugin requires text input
     var requiresTextInput: Bool {
         switch self {
-        case .uuidGenerator, .imageConverter: return false
+        case .uuidGenerator, .imageConverter, .colorPicker: return false
         default: return true
+        }
+    }
+
+    // Whether the plugin requires screen color picking
+    var requiresColorPicker: Bool {
+        switch self {
+        case .colorPicker: return true
+        default: return false
         }
     }
 }
