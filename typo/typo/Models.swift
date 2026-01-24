@@ -162,14 +162,14 @@ class ActionsStore: ObservableObject {
     @Published var actions: [Action] = []
     @Published var apiKeys: [AIProvider: String] = [:]
     @Published var selectedProvider: AIProvider = .openai
-    @Published var selectedModelId: String = ""
+    @Published var selectedModelIds: [AIProvider: String] = [:]
     @Published var perplexityApiKey: String = ""
     @Published var installedPlugins: Set<PluginType> = []
 
     private let actionsKey = "typo_actions"
     private let apiKeysKey = "typo_api_keys"
     private let providerKey = "typo_provider"
-    private let modelKey = "typo_model"
+    private let modelIdsKey = "typo_model_ids"
     private let perplexityApiKeyKey = "typo_perplexity_api_key"
     private let installedPluginsKey = "typo_installed_plugins"
 
@@ -178,6 +178,11 @@ class ActionsStore: ObservableObject {
     // Current API key for selected provider
     var apiKey: String {
         apiKeys[selectedProvider] ?? ""
+    }
+
+    // Current model ID for selected provider
+    var selectedModelId: String {
+        selectedModelIds[selectedProvider] ?? selectedProvider.defaultModelId
     }
 
     var selectedModel: AIModel {
@@ -191,7 +196,7 @@ class ActionsStore: ObservableObject {
         loadActions()
         loadApiKeys()
         loadProvider()
-        loadModel()
+        loadModelIds()
         loadPerplexityApiKey()
         loadInstalledPlugins()
     }
@@ -249,18 +254,30 @@ class ActionsStore: ObservableObject {
     func saveProvider(_ provider: AIProvider) {
         selectedProvider = provider
         UserDefaults.standard.set(provider.rawValue, forKey: providerKey)
-        // Reset model to default for new provider
-        let defaultModel = AIModel.defaultModel(for: provider)
-        saveModel(defaultModel.id)
     }
 
-    func loadModel() {
-        selectedModelId = UserDefaults.standard.string(forKey: modelKey) ?? selectedProvider.defaultModelId
+    func loadModelIds() {
+        if let data = UserDefaults.standard.data(forKey: modelIdsKey),
+           let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
+            for (key, value) in decoded {
+                if let provider = AIProvider(rawValue: key) {
+                    selectedModelIds[provider] = value
+                }
+            }
+        }
     }
 
-    func saveModel(_ modelId: String) {
-        selectedModelId = modelId
-        UserDefaults.standard.set(modelId, forKey: modelKey)
+    func saveModel(_ modelId: String, for provider: AIProvider? = nil) {
+        let targetProvider = provider ?? selectedProvider
+        selectedModelIds[targetProvider] = modelId
+        let stringKeyed = Dictionary(uniqueKeysWithValues: selectedModelIds.map { ($0.key.rawValue, $0.value) })
+        if let encoded = try? JSONEncoder().encode(stringKeyed) {
+            UserDefaults.standard.set(encoded, forKey: modelIdsKey)
+        }
+    }
+
+    func modelId(for provider: AIProvider) -> String {
+        selectedModelIds[provider] ?? provider.defaultModelId
     }
 
     func loadPerplexityApiKey() {

@@ -167,6 +167,21 @@ enum AIProvider: String, CaseIterable, Codable {
             return "console.groq.com/keys"
         }
     }
+
+    var iconName: String {
+        switch self {
+        case .openai:
+            return "openai"
+        case .anthropic:
+            return "claude"
+        case .openrouter:
+            return "openrouter"
+        case .perplexity:
+            return "perplexity"
+        case .groq:
+            return "groq"
+        }
+    }
 }
 
 // MARK: - AI Service

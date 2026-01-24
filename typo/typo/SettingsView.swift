@@ -182,13 +182,14 @@ struct GeneralSettingsView: View {
                         .labelsHidden()
                         .onChange(of: selectedProvider) { _, newValue in
                             store.saveProvider(newValue)
-                            selectedModelId = store.selectedModelId
+                            // Load saved model for this provider
+                            selectedModelId = store.modelId(for: newValue)
                             // Load API key for the new provider
                             apiKeyInput = store.apiKey(for: newValue)
                         }
                         .onAppear {
                             selectedProvider = store.selectedProvider
-                            selectedModelId = store.selectedModelId
+                            selectedModelId = store.modelId(for: store.selectedProvider)
                             apiKeyInput = store.apiKey(for: store.selectedProvider)
                         }
 
@@ -248,7 +249,7 @@ struct GeneralSettingsView: View {
 
                 // Web Search Section
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Web Search (Perplexity)")
+                    Text("Web Search - Perplexity (Optional)")
                         .font(.nunitoBold(size: 18))
                         .foregroundColor(.primary)
 
@@ -263,7 +264,7 @@ struct GeneralSettingsView: View {
                         }
                         .frame(width: 160, alignment: .leading)
 
-                        SecureField("Enter your Perplexity API key", text: $perplexityApiKeyInput)
+                        SecureField("Perplexity API key (Optional)", text: $perplexityApiKeyInput)
                             .textFieldStyle(.plain)
                             .font(.nunitoRegularBold(size: 13))
                             .padding(10)
@@ -450,11 +451,12 @@ struct ModelSpecsTooltip: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Model name with icon
+            // Model name with provider icon
             HStack(spacing: 8) {
-                Image(systemName: "sparkle")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.orange)
+                Image(model.provider.iconName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 18, height: 18)
                 Text(model.name)
                     .font(.nunitoBold(size: 15))
                     .foregroundColor(.primary)
