@@ -729,7 +729,7 @@ struct ShortcutStep: View {
 
     @State private var recordedKeys: [String] = []
     @State private var isRecording = false
-    @State private var savedShortcutKeys: [String] = ["\u{2325}", "D"] // Default: Option + D
+    @State private var savedShortcutKeys: [String] = ["\u{2318}", "\u{21E7}", "T"] // Default: Command + Shift + T
     @State private var eventMonitor: Any?
 
     private let brandBlue = Color(hex: "2196F3")
@@ -880,7 +880,7 @@ struct ShortcutStep: View {
     }
 
     private func loadCurrentShortcut() {
-        let savedKeys = UserDefaults.standard.stringArray(forKey: "typo_shortcut_keys") ?? ["\u{2325}", "D"]
+        let savedKeys = UserDefaults.standard.stringArray(forKey: "typo_shortcut_keys") ?? ["\u{2318}", "\u{21E7}", "T"]
         savedShortcutKeys = savedKeys
     }
 
@@ -889,15 +889,33 @@ struct ShortcutStep: View {
     }
 
     private func startRecording() {
+        stopRecording() // Clean up any existing monitor
         isRecording = true
         recordedKeys = []
 
-        // Monitor for key press
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if self.isRecording {
-                let modifiers = event.modifierFlags
+        // Use local monitor for key events
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
+            guard self.isRecording else { return event }
 
-                // Must have Command or Option
+            let modifiers = event.modifierFlags
+
+            // Build current modifier keys array
+            var currentModifiers: [String] = []
+            if modifiers.contains(.control) { currentModifiers.append("^") }
+            if modifiers.contains(.option) { currentModifiers.append("\u{2325}") }
+            if modifiers.contains(.shift) { currentModifiers.append("\u{21E7}") }
+            if modifiers.contains(.command) { currentModifiers.append("\u{2318}") }
+
+            if event.type == .flagsChanged {
+                // Update recorded keys to show current modifiers in real-time
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                    self.recordedKeys = currentModifiers
+                }
+                return event
+            }
+
+            if event.type == .keyDown {
+                // Must have Command or Option to complete
                 let hasCommand = modifiers.contains(.command)
                 let hasOption = modifiers.contains(.option)
 
@@ -906,26 +924,19 @@ struct ShortcutStep: View {
                     return event
                 }
 
-                var keys: [String] = []
-
-                // Add modifiers in order
-                if modifiers.contains(.control) { keys.append("^") }
-                if modifiers.contains(.option) { keys.append("\u{2325}") }
-                if modifiers.contains(.shift) { keys.append("\u{21E7}") }
-                if modifiers.contains(.command) { keys.append("\u{2318}") }
-
-                // Add the key
+                // Add the final key
                 let key = event.charactersIgnoringModifiers?.uppercased() ?? ""
                 if !key.isEmpty && key.count == 1 {
-                    keys.append(key)
+                    var finalKeys = currentModifiers
+                    finalKeys.append(key)
 
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        self.recordedKeys = keys
+                        self.recordedKeys = finalKeys
                     }
 
                     // Save and close after a short delay
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self.savedShortcutKeys = keys
+                        self.savedShortcutKeys = finalKeys
                         withAnimation {
                             self.isRecording = false
                         }
@@ -954,7 +965,7 @@ struct OnboardingShortcutTooltip: View {
     var body: some View {
         VStack(spacing: 0) {
             // Tooltip content
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 HStack(spacing: 8) {
                     Text("e.g.")
                         .font(.system(size: 13))
@@ -976,12 +987,18 @@ struct OnboardingShortcutTooltip: View {
                     }
                 }
 
-                Text("Recording...")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(hex: "999999"))
+                VStack(spacing: 4) {
+                    Text("Recording...")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Color(hex: "666666"))
+
+                    Text("Press \u{2318} or \u{2325} + key")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(hex: "999999"))
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color.white)
