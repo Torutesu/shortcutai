@@ -355,10 +355,11 @@ struct PermissionsStep: View {
     @State private var isWaiting = false
     @State private var rotationAngle: Double = 0
     @State private var permissionCheckTimer: Timer?
+    @State private var floatAnimationActive = false
 
     // Colors
-    private let accentRed = Color(hex: "E53935")
-    private let accentRedDark = Color(hex: "C62828")
+    private let accentYellow = Color(hex: "F9A825")
+    private let accentYellowDark = Color(hex: "F57F17")
     private let accentGreen = Color(hex: "43A047")
     private let accentGreenDark = Color(hex: "2E7D32")
     private let stepBlue = Color(hex: "2196F3")
@@ -419,12 +420,12 @@ struct PermissionsStep: View {
                                 ZStack {
                                     // Bottom shadow layer (3D effect)
                                     RoundedRectangle(cornerRadius: 14)
-                                        .fill(hasAccessibilityPermission ? accentGreenDark : accentRedDark)
+                                        .fill(hasAccessibilityPermission ? accentGreenDark : accentYellowDark)
                                         .offset(y: 4)
 
                                     // Main button
                                     RoundedRectangle(cornerRadius: 14)
-                                        .fill(hasAccessibilityPermission ? accentGreen : accentRed)
+                                        .fill(hasAccessibilityPermission ? accentGreen : accentYellow)
                                 }
                             )
                     }
@@ -444,41 +445,46 @@ struct PermissionsStep: View {
             }
             .frame(width: 340)
 
-            // Right side - Red/Green with status
+            // Right side - Yellow/Green with status
             ZStack {
-                (hasAccessibilityPermission ? accentGreen : accentRed)
+                (hasAccessibilityPermission ? accentGreen : accentYellow)
                     .animation(.easeInOut(duration: 0.5), value: hasAccessibilityPermission)
 
-                // Decorative icons scattered
+                // Floating decorative icons with premium animation
                 GeometryReader { geo in
                     ForEach(0..<8, id: \.self) { index in
-                        let icons = ["xmark.circle", "exclamationmark.triangle", "shield.slash", "hand.raised.slash", "nosign", "circle.slash", "xmark.octagon", "exclamationmark.circle"]
-                        let positions: [(CGFloat, CGFloat)] = [
-                            (0.85, 0.12), (0.15, 0.25), (0.80, 0.35),
-                            (0.20, 0.55), (0.75, 0.60), (0.10, 0.75),
-                            (0.85, 0.80), (0.50, 0.90)
-                        ]
-
-                        Image(systemName: hasAccessibilityPermission ? "checkmark.circle" : icons[index % icons.count])
-                            .font(.system(size: 24))
-                            .foregroundColor(.white.opacity(0.15))
-                            .position(
-                                x: geo.size.width * positions[index].0,
-                                y: geo.size.height * positions[index].1
-                            )
+                        FloatingIcon(
+                            index: index,
+                            isGranted: hasAccessibilityPermission,
+                            geoSize: geo.size,
+                            isAnimating: floatAnimationActive
+                        )
                     }
                 }
 
                 // Status indicator
                 HStack(spacing: 10) {
-                    Image(systemName: hasAccessibilityPermission ? "checkmark" : "arrow.triangle.2.circlepath")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(hasAccessibilityPermission ? accentGreen : accentRed)
-                        .rotationEffect(.degrees(hasAccessibilityPermission ? 0 : rotationAngle))
+                    ZStack {
+                        // Spinning reload icon (fades out when granted)
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(accentYellow)
+                            .rotationEffect(.degrees(rotationAngle))
+                            .opacity(hasAccessibilityPermission ? 0 : 1)
+                            .scaleEffect(hasAccessibilityPermission ? 0.5 : 1)
+
+                        // Checkmark (fades in when granted)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(accentGreen)
+                            .opacity(hasAccessibilityPermission ? 1 : 0)
+                            .scaleEffect(hasAccessibilityPermission ? 1 : 0.5)
+                    }
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: hasAccessibilityPermission)
 
                     Text(hasAccessibilityPermission ? "Permission Granted!" : "Waiting for Permissions")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundColor(hasAccessibilityPermission ? accentGreen : accentRed)
+                        .foregroundColor(hasAccessibilityPermission ? accentGreen : accentYellow)
                 }
                 .padding(.horizontal, 22)
                 .padding(.vertical, 12)
@@ -495,6 +501,10 @@ struct PermissionsStep: View {
             checkAccessibilityPermission()
             startRotationAnimation()
             startPermissionCheck()
+            // Start floating animation
+            withAnimation {
+                floatAnimationActive = true
+            }
         }
         .onDisappear {
             permissionCheckTimer?.invalidate()
@@ -528,6 +538,97 @@ struct PermissionsStep: View {
         isWaiting = true
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
+        }
+    }
+}
+
+// MARK: - Floating Icon Component
+
+struct FloatingIcon: View {
+    let index: Int
+    let isGranted: Bool
+    let geoSize: CGSize
+    let isAnimating: Bool
+
+    @State private var floatOffset: CGFloat = 0
+    @State private var iconRotation: Double = 0
+    @State private var iconScale: CGFloat = 1.0
+
+    private let icons = ["xmark.circle", "exclamationmark.triangle", "shield.slash", "hand.raised.slash", "nosign", "circle.slash", "xmark.octagon", "exclamationmark.circle"]
+    private let grantedIcons = ["checkmark.circle", "checkmark.seal", "hand.thumbsup", "star.fill", "sparkles", "heart.fill", "shield.checkered", "checkmark.circle.fill"]
+
+    private let positions: [(CGFloat, CGFloat)] = [
+        (0.85, 0.10), (0.12, 0.22), (0.82, 0.38),
+        (0.18, 0.52), (0.78, 0.65), (0.08, 0.78),
+        (0.88, 0.85), (0.50, 0.92)
+    ]
+
+    private let sizes: [CGFloat] = [22, 26, 20, 28, 24, 22, 26, 20]
+    private let opacities: [Double] = [0.18, 0.22, 0.15, 0.25, 0.20, 0.17, 0.23, 0.16]
+
+    // Different animation parameters for each icon
+    private var floatDuration: Double {
+        [3.2, 2.8, 3.5, 2.6, 3.0, 3.3, 2.9, 3.1][index]
+    }
+
+    private var floatDistance: CGFloat {
+        [12, 15, 10, 18, 14, 11, 16, 13][index]
+    }
+
+    private var rotationAmount: Double {
+        [8, -10, 12, -8, 10, -12, 8, -10][index]
+    }
+
+    private var animationDelay: Double {
+        Double(index) * 0.15
+    }
+
+    var body: some View {
+        Image(systemName: isGranted ? grantedIcons[index % grantedIcons.count] : icons[index % icons.count])
+            .font(.system(size: sizes[index], weight: .medium))
+            .foregroundColor(.white.opacity(opacities[index]))
+            .scaleEffect(iconScale)
+            .rotationEffect(.degrees(iconRotation))
+            .offset(y: floatOffset)
+            .position(
+                x: geoSize.width * positions[index].0,
+                y: geoSize.height * positions[index].1
+            )
+            .onAppear {
+                startFloatingAnimation()
+            }
+            .onChange(of: isGranted) { _, newValue in
+                // Celebration animation when granted
+                if newValue {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                        iconScale = 1.3
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            iconScale = 1.0
+                        }
+                    }
+                }
+            }
+    }
+
+    private func startFloatingAnimation() {
+        // Floating up and down
+        withAnimation(
+            .easeInOut(duration: floatDuration)
+            .repeatForever(autoreverses: true)
+            .delay(animationDelay)
+        ) {
+            floatOffset = floatDistance
+        }
+
+        // Gentle rotation
+        withAnimation(
+            .easeInOut(duration: floatDuration * 1.2)
+            .repeatForever(autoreverses: true)
+            .delay(animationDelay)
+        ) {
+            iconRotation = rotationAmount
         }
     }
 }
@@ -570,7 +671,7 @@ struct WavyEdge: View {
                 path.addLine(to: CGPoint(x: width, y: 0))
                 path.closeSubpath()
             }
-            .fill(isGreen ? Color(hex: "43A047") : Color(hex: "E53935"))
+            .fill(isGreen ? Color(hex: "43A047") : Color(hex: "F9A825"))
         }
         .animation(.easeInOut(duration: 0.5), value: isGreen)
     }
