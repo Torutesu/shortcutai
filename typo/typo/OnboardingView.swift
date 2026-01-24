@@ -614,6 +614,7 @@ struct StepRow: View {
 struct LicenseDotsInput: View {
     @Binding var licenseInput: String
     @FocusState private var isFocused: Bool
+    @State private var cursorVisible = true
 
     private let totalChars = 32
     private let dotsPerRow = 16
@@ -644,13 +645,14 @@ struct LicenseDotsInput: View {
                         ForEach(0..<dotsInThisRow, id: \.self) { col in
                             let dotIndex = row * dotsPerRow + col
                             let hasChar = dotIndex < licenseInput.count
+                            let isCursorPosition = dotIndex == licenseInput.count && isFocused
 
                             ZStack {
-                                // Dot (hidden when char is typed)
+                                // Dot (hidden when char is typed or cursor is here)
                                 Circle()
                                     .fill(Color(hex: "d0d0d0"))
                                     .frame(width: 3, height: 3)
-                                    .opacity(hasChar ? 0 : 1)
+                                    .opacity(hasChar || isCursorPosition ? 0 : 1)
 
                                 // Character
                                 if hasChar {
@@ -658,6 +660,14 @@ struct LicenseDotsInput: View {
                                     Text(String(licenseInput[index]))
                                         .font(.system(size: 14, weight: .semibold, design: .monospaced))
                                         .foregroundColor(Color(hex: "555555"))
+                                }
+
+                                // Cursor
+                                if isCursorPosition {
+                                    Rectangle()
+                                        .fill(Color(hex: "2196F3"))
+                                        .frame(width: 2, height: 14)
+                                        .opacity(cursorVisible ? 1 : 0)
                                 }
                             }
                             .frame(width: 9, height: 16)
@@ -672,6 +682,18 @@ struct LicenseDotsInput: View {
         }
         .onAppear {
             isFocused = true
+            startCursorBlink()
+        }
+        .onChange(of: isFocused) { _, newValue in
+            if newValue {
+                startCursorBlink()
+            }
+        }
+    }
+
+    private func startCursorBlink() {
+        Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { _ in
+            cursorVisible.toggle()
         }
     }
 }
