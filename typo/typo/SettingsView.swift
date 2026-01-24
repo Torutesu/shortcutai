@@ -1655,11 +1655,11 @@ enum PromptCategory: String, CaseIterable {
 
     var color: Color {
         switch self {
-        case .writing: return Color(red: 0.0, green: 0.584, blue: 1.0)
-        case .coding: return Color(red: 0.55, green: 0.35, blue: 0.85)
-        case .productivity: return Color(red: 0.2, green: 0.7, blue: 0.4)
-        case .creative: return Color(red: 0.95, green: 0.5, blue: 0.2)
-        case .analysis: return Color(red: 0.85, green: 0.3, blue: 0.4)
+        case .writing: return Color(red: 0.45, green: 0.55, blue: 0.70)    // Soft slate blue
+        case .coding: return Color(red: 0.55, green: 0.50, blue: 0.65)     // Muted lavender
+        case .productivity: return Color(red: 0.50, green: 0.60, blue: 0.55) // Sage green
+        case .creative: return Color(red: 0.65, green: 0.55, blue: 0.50)   // Warm taupe
+        case .analysis: return Color(red: 0.60, green: 0.52, blue: 0.58)   // Dusty rose
         }
     }
 }
@@ -2018,20 +2018,20 @@ struct TemplateCard: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Icon and name header
                 HStack(spacing: 10) {
-                    // Icon with 3D effect
+                    // Icon with subtle 3D effect
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(template.category.color.opacity(0.3))
+                            .fill(template.category.color.opacity(0.2))
                             .frame(width: 36, height: 36)
                             .offset(y: 2)
 
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(template.category.color.opacity(0.15))
+                            .fill(template.category.color.opacity(0.12))
                             .frame(width: 36, height: 36)
 
                         Image(systemName: template.icon)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(template.category.color)
+                            .foregroundColor(template.category.color.opacity(0.9))
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
