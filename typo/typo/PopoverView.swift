@@ -1013,6 +1013,16 @@ struct PopoverView: View {
     }
 
     func executeAction(_ action: Action) {
+        // If we're in the main popup (no initialAction), close and reopen with action popup
+        if initialAction == nil {
+            onClose()
+            globalAppDelegate?.pendingAction = action
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                globalAppDelegate?.showPopoverWithAction()
+            }
+            return
+        }
+
         let textToProcess = textManager.capturedText
 
         // Check if plugin requires image input
