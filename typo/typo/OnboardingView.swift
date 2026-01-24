@@ -682,12 +682,14 @@ struct StepRow: View {
     let number: Int
     let text: String
 
+    private let stepGreen = Color(hex: "00ce44")
+
     var body: some View {
         HStack(spacing: 12) {
             // Number circle
             ZStack {
                 Circle()
-                    .fill(Color(hex: "2196F3"))
+                    .fill(stepGreen)
                     .frame(width: 28, height: 28)
 
                 Text("\(number)")
@@ -705,7 +707,11 @@ struct StepRow: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(hex: "e8e8e8"), lineWidth: 1)
+                .fill(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(hex: "e8e8e8"), lineWidth: 1)
+                )
         )
     }
 }
