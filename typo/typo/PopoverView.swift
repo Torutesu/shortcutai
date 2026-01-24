@@ -416,7 +416,8 @@ struct PopoverView: View {
                         .padding(20)
                 } else {
                     Text(result)
-                        .font(.system(size: 14))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(hex: "555555"))
                         .lineSpacing(6)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -449,16 +450,8 @@ struct PopoverView: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(
-                                ZStack {
-                                    // Bottom layer (3D effect)
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(appBlue.opacity(0.3))
-                                        .offset(y: 2)
-
-                                    // Top layer
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(appBlue.opacity(0.15))
-                                }
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(appBlue.opacity(0.15))
                             )
                     }
                     .buttonStyle(.plain)
@@ -475,16 +468,8 @@ struct PopoverView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
                                 .background(
-                                    ZStack {
-                                        // Bottom layer (3D effect) - darker blue
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(Color(red: 0.0, green: 0.45, blue: 0.8))
-                                            .offset(y: 2)
-
-                                        // Top layer - #0095ff
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(appBlue)
-                                    }
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(appBlue)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -607,13 +592,8 @@ struct PopoverView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
                         .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(appBlue.opacity(0.3))
-                                    .offset(y: 2)
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(appBlue.opacity(0.15))
-                            }
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(appBlue.opacity(0.15))
                         )
                     }
                     .buttonStyle(.plain)
@@ -633,13 +613,8 @@ struct PopoverView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
                         .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(red: 0.0, green: 0.45, blue: 0.8))
-                                    .offset(y: 2)
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(appBlue)
-                            }
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(appBlue)
                         )
                     }
                     .buttonStyle(.plain)
@@ -1820,13 +1795,8 @@ struct ColorPickerResultView: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
                             .background(
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(appBlue.opacity(0.3))
-                                        .offset(y: 2)
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .fill(appBlue.opacity(0.15))
-                                }
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(appBlue.opacity(0.15))
                             )
                     }
                     .buttonStyle(.plain)
@@ -1845,13 +1815,8 @@ struct ColorPickerResultView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
                                 .background(
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(Color(red: 0.0, green: 0.45, blue: 0.8))
-                                            .offset(y: 2)
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(appBlue)
-                                    }
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(appBlue)
                                 )
                         }
                         .buttonStyle(.plain)
