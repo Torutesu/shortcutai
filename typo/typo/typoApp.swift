@@ -47,6 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var popoverWindow: NSWindow?
     var settingsWindow: NSWindow?
+    var onboardingWindow: NSWindow?
     var eventMonitor: Any?
     var localEventMonitor: Any?
     var hotKeyRef: EventHotKeyRef?
@@ -57,6 +58,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         globalAppDelegate = self
         registerCustomFonts()
+
+        // Check if onboarding is needed
+        if !OnboardingManager.shared.hasCompletedOnboarding {
+            showOnboarding()
+        } else {
+            setupApp()
+        }
+    }
+
+    func setupApp() {
         setupMenuBar()
         setupGlobalHotkey()
         setupActionHotkeys()
@@ -73,6 +84,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.setupActionHotkeys()
             }
             .store(in: &cancellables)
+    }
+
+    func showOnboarding() {
+        let onboardingView = OnboardingView(onComplete: { [weak self] in
+            self?.onboardingWindow?.close()
+            self?.onboardingWindow = nil
+            self?.setupApp()
+        })
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 900, height: 580),
+            styleMask: [.titled, .closable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = ""
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isMovableByWindowBackground = true
+        window.contentView = NSHostingView(rootView: onboardingView)
+        window.center()
+        window.isReleasedWhenClosed = false
+
+        onboardingWindow = window
+        onboardingWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func setupColorPickerResultObserver() {
