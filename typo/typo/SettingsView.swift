@@ -1066,7 +1066,7 @@ struct AboutView: View {
     }
 
     var body: some View {
-        HStack(spacing: 50) {
+        HStack(spacing: 30) {
             // Left side - Membership Style Parallax Card
             GeometryReader { geometry in
                 let centerX = geometry.size.width / 2
@@ -1080,21 +1080,21 @@ struct AboutView: View {
                     // Main Card
                     ZStack {
                         // Card background - solid color #00A1FF
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: 16)
                             .fill(cardColor)
 
                         // Card content - all elements move with the card
                         VStack(alignment: .leading, spacing: 0) {
                             // Top section - Member info
                             HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     Text("MEMBER SINCE")
-                                        .font(.system(size: 8, weight: .semibold))
+                                        .font(.system(size: 7, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.5))
-                                        .tracking(1.2)
+                                        .tracking(1.0)
 
                                     Text("01/26")
-                                        .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                                        .font(.system(size: 13, weight: .semibold, design: .monospaced))
                                         .foregroundColor(.white)
                                 }
 
@@ -1102,56 +1102,55 @@ struct AboutView: View {
 
                                 // Pro fingerprint icon
                                 Image(systemName: "touchid")
-                                    .font(.system(size: 20, weight: .medium))
+                                    .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(.white.opacity(0.8))
                             }
-                            .padding(.horizontal, 24)
-                            .padding(.top, 24)
+                            .padding(.horizontal, 18)
+                            .padding(.top, 18)
 
                             Spacer()
 
                             // Center - Title/Rank with decorative element
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: 0) {
                                 Text("Text")
-                                    .font(.nunitoBlack(size: 44))
+                                    .font(.nunitoBlack(size: 36))
                                     .foregroundColor(.white)
 
                                 Text("Master")
-                                    .font(.nunitoBlack(size: 44))
+                                    .font(.nunitoBlack(size: 36))
                                     .foregroundColor(.white.opacity(0.9))
                             }
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, 18)
 
                             Spacer()
 
                             // Bottom section - Stats
-                            VStack(spacing: 14) {
+                            VStack(spacing: 10) {
                                 // Separator line
                                 Rectangle()
                                     .fill(Color.white.opacity(0.2))
                                     .frame(height: 1)
-                                    .padding(.horizontal, 24)
 
                                 // Stats row
                                 HStack(spacing: 0) {
                                     // Typos fixed
-                                    VStack(spacing: 6) {
-                                        HStack(spacing: 6) {
+                                    VStack(spacing: 4) {
+                                        HStack(spacing: 4) {
                                             Image(systemName: "laurel.leading")
-                                                .font(.system(size: 24))
+                                                .font(.system(size: 18))
                                                 .foregroundColor(.white.opacity(0.7))
 
                                             Text("42")
-                                                .font(.nunitoBlack(size: 32))
+                                                .font(.nunitoBlack(size: 24))
                                                 .foregroundColor(.white)
 
                                             Image(systemName: "laurel.trailing")
-                                                .font(.system(size: 24))
+                                                .font(.system(size: 18))
                                                 .foregroundColor(.white.opacity(0.7))
                                         }
 
                                         Text("Fixes")
-                                            .font(.system(size: 12, weight: .medium))
+                                            .font(.system(size: 10, weight: .medium))
                                             .foregroundColor(.white.opacity(0.6))
                                     }
                                     .frame(maxWidth: .infinity)
@@ -1159,26 +1158,26 @@ struct AboutView: View {
                                     // Divider
                                     Rectangle()
                                         .fill(Color.white.opacity(0.2))
-                                        .frame(width: 1, height: 55)
+                                        .frame(width: 1, height: 45)
 
                                     // Days active
-                                    VStack(spacing: 6) {
-                                        HStack(spacing: 6) {
+                                    VStack(spacing: 4) {
+                                        HStack(spacing: 4) {
                                             Image(systemName: "laurel.leading")
-                                                .font(.system(size: 24))
+                                                .font(.system(size: 18))
                                                 .foregroundColor(.white.opacity(0.7))
 
                                             Text("14")
-                                                .font(.nunitoBlack(size: 32))
+                                                .font(.nunitoBlack(size: 24))
                                                 .foregroundColor(.white)
 
                                             Image(systemName: "laurel.trailing")
-                                                .font(.system(size: 24))
+                                                .font(.system(size: 18))
                                                 .foregroundColor(.white.opacity(0.7))
                                         }
 
                                         Text("Days")
-                                            .font(.system(size: 12, weight: .medium))
+                                            .font(.system(size: 10, weight: .medium))
                                             .foregroundColor(.white.opacity(0.6))
                                     }
                                     .frame(maxWidth: .infinity)
@@ -1188,17 +1187,16 @@ struct AboutView: View {
                                 Rectangle()
                                     .fill(Color.white.opacity(0.2))
                                     .frame(height: 1)
-                                    .padding(.horizontal, 24)
                             }
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 24)
+                            .padding(.horizontal, 18)
+                            .padding(.bottom, 18)
                         }
 
                         // Subtle inner border
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: 16)
                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     }
-                    .frame(width: 280, height: 400)
+                    .frame(width: 240, height: 340)
                     .shadow(
                         color: cardColor.opacity(isHovering ? 0.4 : 0.25),
                         radius: isHovering ? 30 : 20,
@@ -1233,136 +1231,139 @@ struct AboutView: View {
                     }
                 }
             }
-            .frame(width: 340)
+            .frame(width: 280)
 
-            // Right side - Text and Buttons
-            VStack(alignment: .leading, spacing: 24) {
-                Spacer()
+            // Right side - Buttons
+            VStack(alignment: .leading, spacing: 0) {
+                // Action rows - matching alado design
+                VStack(spacing: 0) {
+                    // Manage Account row
+                    AboutActionRow(
+                        icon: "person.circle",
+                        title: "Manage Account",
+                        subtitle: "Manage your subscription and account settings",
+                        buttonTitle: "Manage",
+                        action: {
+                            if let url = URL(string: "https://typo.app/account") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                    )
 
-                // App name and version
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Typo")
-                        .font(.nunitoBold(size: 36))
-                        .foregroundColor(.primary)
+                    Divider()
 
-                    Text("Version 1.0.0")
-                        .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                    // Check for Updates row
+                    AboutActionRow(
+                        icon: "arrow.triangle.2.circlepath",
+                        title: "Check for Updates",
+                        subtitle: "Keep Typo up to date with the latest features.",
+                        buttonTitle: "Check",
+                        action: {
+                            if let url = URL(string: "https://typo.app/updates") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                    )
+
+                    Divider()
+
+                    // Contact Support row
+                    AboutActionRow(
+                        icon: "envelope",
+                        title: "Contact Support",
+                        subtitle: "Need help? Get in touch with our support team.",
+                        buttonTitle: "Contact",
+                        action: {
+                            if let url = URL(string: "https://typo.app/support") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                    )
                 }
 
-                // Description
-                Text("Transform text with AI-powered shortcuts. Select any text and use keyboard shortcuts to fix grammar, translate, rephrase, and more.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                    .lineSpacing(4)
-                    .fixedSize(horizontal: false, vertical: true)
+                Spacer().frame(height: 24)
 
-                Spacer().frame(height: 8)
+                // Footer with gray background - like the image
+                HStack(spacing: 14) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 20))
+                        .foregroundColor(.secondary.opacity(0.4))
+                        .frame(width: 30)
 
-                // Action buttons - vertical stack
-                VStack(spacing: 12) {
-                    // Check for Updates button - primary style
-                    Button(action: {
-                        if let url = URL(string: "https://typo.app/updates") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("Check for Updates")
-                                .font(.nunitoRegularBold(size: 14))
-                            Spacer()
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 14)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(red: 0.0, green: 0.45, blue: 0.8))
-                                    .offset(y: 3)
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(appBlue)
-                            }
-                        )
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Version 1.1.0")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.secondary)
+
+                        Text("© 2025 Rico Beran. All rights reserved.")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary.opacity(0.6))
                     }
-                    .buttonStyle(.plain)
-                    .pointerCursor()
-
-                    // Support button - secondary style
-                    Button(action: {
-                        if let url = URL(string: "https://typo.app/support") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "questionmark.circle")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("Support")
-                                .font(.nunitoRegularBold(size: 14))
-                            Spacer()
-                        }
-                        .foregroundColor(appBlue)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 14)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(appBlue.opacity(0.25))
-                                    .offset(y: 3)
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(appBlue.opacity(0.12))
-                            }
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .pointerCursor()
-
-                    // Manage Account button - secondary style
-                    Button(action: {
-                        if let url = URL(string: "https://typo.app/account") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "person.circle")
-                                .font(.system(size: 14, weight: .medium))
-                            Text("Manage Account")
-                                .font(.nunitoRegularBold(size: 14))
-                            Spacer()
-                        }
-                        .foregroundColor(appBlue)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 14)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(appBlue.opacity(0.25))
-                                    .offset(y: 3)
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(appBlue.opacity(0.12))
-                            }
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .pointerCursor()
                 }
-                .frame(maxWidth: 260)
-
-                Spacer()
-
-                // Footer
-                Text("Made with SwiftUI")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary.opacity(0.6))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.gray.opacity(0.12))
+                )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.trailing, 40)
+            .frame(height: 340, alignment: .top) // Match card height
+            .padding(.trailing, 30)
         }
-        .padding(.leading, 40)
+        .padding(.leading, 30)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(NSColor.windowBackgroundColor))
+    }
+}
+
+// MARK: - About Action Row
+
+struct AboutActionRow: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let buttonTitle: String
+    let action: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Title row: icon + title + button
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.system(size: 22))
+                    .foregroundColor(Color.gray.opacity(0.45))
+                    .frame(width: 30)
+
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                // Small bordered button
+                Button(action: action) {
+                    Text(buttonTitle)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Subtitle below - aligned under icon
+            Text(subtitle)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary.opacity(0.6))
+                .padding(.leading, 44) // 30 (icon width) + 14 (spacing)
+        }
+        .padding(.vertical, 18)
     }
 }
 
