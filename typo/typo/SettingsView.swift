@@ -1099,7 +1099,7 @@ struct ActionEditorView: View {
                         }
                     }
                 )
-                .fixedSize()
+                .fixedSize(horizontal: true, vertical: true)
                 .offset(x: 24, y: 68)
                 .transition(.opacity)
             }
