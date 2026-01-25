@@ -570,6 +570,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    func suspendHotkeys() {
+        if let ref = hotKeyRef {
+            UnregisterEventHotKey(ref)
+        }
+        for ref in actionHotKeyRefs {
+            if let ref = ref {
+                UnregisterEventHotKey(ref)
+            }
+        }
+        actionHotKeyRefs.removeAll()
+    }
+
+    func resumeHotkeys() {
+        setupGlobalHotkey()
+        setupActionHotkeys()
+    }
+
     @objc func quitApp() {
         NSApp.terminate(nil)
     }

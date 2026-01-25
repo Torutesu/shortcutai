@@ -710,6 +710,7 @@ struct ActionEditorView: View {
     @State private var isNameFocused = false
     @State private var showDeleteConfirmation = false
     @State private var shortcutConflict: String? = nil
+    @State private var shortcutMonitor: Any? = nil
 
     // Input background color: #f1f1ef for light mode, controlBackgroundColor for dark mode
     var inputBackgroundColor: Color {
@@ -973,14 +974,42 @@ struct ActionEditorView: View {
         }
     }
 
+    func stopRecordingShortcut() {
+        if let monitor = shortcutMonitor {
+            NSEvent.removeMonitor(monitor)
+            shortcutMonitor = nil
+        }
+        isRecordingShortcut = false
+        shortcutConflict = nil
+        recordedKeys = []
+        globalAppDelegate?.resumeHotkeys()
+    }
+
     func startRecordingShortcut() {
+        // Remove any existing monitor first
+        if let monitor = shortcutMonitor {
+            NSEvent.removeMonitor(monitor)
+            shortcutMonitor = nil
+        }
+
         isRecordingShortcut = true
         recordedKeys = []
         shortcutConflict = nil
 
+        // Suspend all hotkeys to prevent actions from firing during recording
+        globalAppDelegate?.suspendHotkeys()
+
         // Monitor for key events (keyDown + flagsChanged for real-time modifier display)
-        NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
+        shortcutMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) { event in
             guard self.isRecordingShortcut else { return event }
+
+            // Escape cancels recording
+            if event.type == .keyDown && event.keyCode == 53 {
+                withAnimation {
+                    self.stopRecordingShortcut()
+                }
+                return nil
+            }
 
             let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
@@ -1016,22 +1045,34 @@ struct ActionEditorView: View {
                     var finalKeys = currentModifiers
                     finalKeys.append(key)
 
-                    // Check for conflicts with other actions
+                    // Check for conflicts with other actions (compare as sets to ignore order)
+                    let currentModSet = Set(currentModifiers)
                     let conflictingAction = ActionsStore.shared.actions.first { other in
                         other.id != self.action.id &&
                         !other.shortcut.isEmpty &&
-                        other.shortcut == key &&
-                        other.shortcutModifiers == currentModifiers
+                        other.shortcut.uppercased() == key &&
+                        Set(other.shortcutModifiers) == currentModSet
                     }
+
+                    // Also check against the main popup hotkey (⌘⇧T)
+                    let isMainHotkeyConflict = key == "T" && currentModSet == Set(["\u{2318}", "\u{21E7}"])
 
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         self.recordedKeys = finalKeys
                     }
 
-                    if let conflict = conflictingAction {
+                    // Determine conflict name
+                    var conflictName: String? = nil
+                    if isMainHotkeyConflict {
+                        conflictName = "Open Typo"
+                    } else if let conflict = conflictingAction {
+                        conflictName = conflict.name
+                    }
+
+                    if let name = conflictName {
                         // Show conflict error - don't save
                         withAnimation {
-                            self.shortcutConflict = conflict.name
+                            self.shortcutConflict = name
                         }
                         // Keep recording open so user can try again
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
@@ -1050,10 +1091,10 @@ struct ActionEditorView: View {
                     self.hasUnsavedChanges = true
                     self.shortcutConflict = nil
 
-                    // Close tooltip after a delay
+                    // Close tooltip after a delay and restore hotkeys
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         withAnimation {
-                            self.isRecordingShortcut = false
+                            self.stopRecordingShortcut()
                         }
                     }
                     return nil
@@ -1174,7 +1215,7 @@ struct ShortcutTooltip: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                    .stroke(hasConflict ? Color.red.opacity(0.5) : Color.gray.opacity(0.1), lineWidth: hasConflict ? 2 : 1)
             )
 
             // Arrow pointing down
