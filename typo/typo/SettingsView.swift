@@ -1977,33 +1977,11 @@ struct AboutView: View {
 
                 Spacer().frame(height: 24)
 
-                // Footer with gray background - like the image
-                HStack(spacing: 14) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.system(size: 20))
-                        .foregroundColor(.secondary.opacity(0.4))
-                        .frame(width: 30)
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Version 1.1.0")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.secondary)
-
-                        Text("© 2025 Rico Beran. All rights reserved.")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary.opacity(0.6))
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.12))
-                )
+                // Animated Cat Logo
+                AnimatedCatLogo(subtitle: "© 2026 All rights reserved.")
+                    .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 340, alignment: .top) // Match card height
             .padding(.trailing, 30)
         }
         .padding(.leading, 30)
