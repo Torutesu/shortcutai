@@ -82,6 +82,14 @@ struct PopoverView: View {
                 ChatView(onClose: {
                     showChat = false
                 })
+                .onAppear {
+                    // Notify AppDelegate to suspend click-outside monitor
+                    NotificationCenter.default.post(name: NSNotification.Name("ChatOpened"), object: nil)
+                }
+                .onDisappear {
+                    // Notify AppDelegate to restore click-outside monitor
+                    NotificationCenter.default.post(name: NSNotification.Name("ChatClosed"), object: nil)
+                }
             } else {
                 VStack(spacing: 0) {
                     if showImageConverter, let action = activeAction {

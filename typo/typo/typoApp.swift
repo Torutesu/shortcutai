@@ -142,6 +142,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Store the result and show popup with it
             self?.showColorPickerResult(result: result, action: action)
         }
+
+        // Listen for chat open/close to suspend/restore click-outside monitor
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ChatOpened"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Suspend click-outside monitor when chat is open
+            if let monitor = self?.eventMonitor {
+                NSEvent.removeMonitor(monitor)
+                self?.eventMonitor = nil
+            }
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("ChatClosed"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Restore click-outside monitor when chat is closed
+            self?.eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+                self?.hidePopover()
+            }
+        }
     }
 
     func showColorPickerResult(result: String, action: Action) {
