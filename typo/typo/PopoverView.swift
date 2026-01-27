@@ -366,9 +366,9 @@ struct PopoverView: View {
 
                 Spacer()
 
-                Text("Processing...")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                ProgressView()
+                    .scaleEffect(0.7)
+                    .frame(height: 31)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
