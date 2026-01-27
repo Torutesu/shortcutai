@@ -541,7 +541,7 @@ struct ModelSpecsTooltip: View {
             VStack(alignment: .leading, spacing: 8) {
                 SpecsBar(label: "Speed", value: model.specs.speed)
                 SpecsBar(label: "Intelligence", value: model.specs.intelligence)
-                SpecsBar(label: "Token usage", value: model.specs.tokenUsage)
+                SpecsBar(label: "Token usage", value: model.specs.tokenUsage, inverted: true)
             }
         }
         .padding(14)
@@ -557,9 +557,16 @@ struct ModelSpecsTooltip: View {
 struct SpecsBar: View {
     let label: String
     let value: Int // 1-5
+    var inverted: Bool = false // For token usage: higher value = lower consumption, so invert display
 
     private var appBlue: Color {
         Color(red: 0.0, green: 0.584, blue: 1.0)
+    }
+
+    // For inverted bars (like token usage), we flip the display
+    // tokenUsage 5 (cheap) shows 1 bar, tokenUsage 1 (expensive) shows 5 bars
+    private var displayValue: Int {
+        inverted ? (6 - value) : value
     }
 
     var body: some View {
@@ -572,7 +579,7 @@ struct SpecsBar: View {
             HStack(spacing: 4) {
                 ForEach(0..<5, id: \.self) { index in
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(index < value ? appBlue : Color.gray.opacity(0.3))
+                        .fill(index < displayValue ? appBlue : Color.gray.opacity(0.3))
                         .frame(width: 18, height: 6)
                 }
             }
