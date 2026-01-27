@@ -2103,9 +2103,9 @@ struct AboutView: View {
         Color(red: 0.0, green: 0.584, blue: 1.0)
     }
 
-    // Card color - #63C7FF
+    // Card color - #FBBAC4 (pink from onboarding)
     private var cardColor: Color {
-        Color(red: 0.388, green: 0.78, blue: 1.0) // #63C7FF
+        Color(hex: "FBBAC4")
     }
 
     var body: some View {
@@ -2155,11 +2155,11 @@ struct AboutView: View {
 
                             // Center - Title/Rank with decorative element
                             VStack(alignment: .leading, spacing: 0) {
-                                Text("Text")
+                                Text("TexTab")
                                     .font(.nunitoBlack(size: 36))
                                     .foregroundColor(.white)
 
-                                Text("Master")
+                                Text("Pro")
                                     .font(.nunitoBlack(size: 36))
                                     .foregroundColor(.white.opacity(0.9))
                             }
@@ -2240,12 +2240,6 @@ struct AboutView: View {
                             .stroke(Color.white.opacity(0.2), lineWidth: 1)
                     }
                     .frame(width: 240, height: 340)
-                    .shadow(
-                        color: cardColor.opacity(isHovering ? 0.4 : 0.25),
-                        radius: isHovering ? 30 : 20,
-                        x: 0,
-                        y: isHovering ? 15 : 10
-                    )
                     .rotation3DEffect(
                         .degrees(Double(rotateX)),
                         axis: (x: 1, y: 0, z: 0),
