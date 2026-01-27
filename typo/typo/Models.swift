@@ -270,6 +270,11 @@ class ActionsStore: ObservableObject {
         }
     }
 
+    func clearAllActions() {
+        actions = []
+        saveActions()
+    }
+
     func loadApiKeys() {
         if let data = UserDefaults.standard.data(forKey: apiKeysKey),
            let decoded = try? JSONDecoder().decode([String: String].self, from: data) {

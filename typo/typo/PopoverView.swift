@@ -41,6 +41,7 @@ func promptRequiresWebSearch(_ prompt: String) -> Bool {
 struct PopoverView: View {
     @StateObject private var store = ActionsStore.shared
     @StateObject private var textManager = CapturedTextManager.shared
+    @StateObject private var authManager = AuthManager.shared
     @State private var selectedIndex = 0
     @State private var isProcessing = false
     @State private var resultText: String?
@@ -80,7 +81,10 @@ struct PopoverView: View {
 
     var body: some View {
         Group {
-            if showChat {
+            if !authManager.isAuthenticated {
+                // Show login required message when not authenticated
+                loginRequiredPopup
+            } else if showChat {
                 // Chat view
                 ChatView(onClose: {
                     showChat = false
@@ -142,6 +146,67 @@ struct PopoverView: View {
                 activeAction = nil
                 isProcessing = false
             }
+        }
+    }
+
+    // MARK: - Login Required Popup
+
+    private var loginRequiredPopup: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image("logo textab")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 60, height: 60)
+
+            Text("Sign In Required")
+                .font(.nunitoBold(size: 20))
+                .foregroundColor(.primary)
+
+            Text("Please sign in to use TexTab")
+                .font(.nunitoRegularBold(size: 14))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button(action: {
+                onOpenSettings()
+            }) {
+                Text("Open Settings")
+                    .font(.nunitoBold(size: 14))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color(red: 0.0, green: 0.584, blue: 1.0))
+                    )
+            }
+            .buttonStyle(.plain)
+            .pointerCursor()
+
+            Spacer()
+
+            // Footer
+            HStack(spacing: 4) {
+                KeyboardKey("esc")
+                Text("close")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.bottom, 12)
+        }
+        .frame(width: 320)
+        .background(Color(NSColor.windowBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+        .onKeyPress(.escape) {
+            onClose()
+            return .handled
         }
     }
 

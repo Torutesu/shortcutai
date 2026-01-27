@@ -150,6 +150,8 @@ class AuthManager: ObservableObject {
 
         await MainActor.run {
             saveSession(authResponse)
+            // Load default actions for new user
+            ActionsStore.shared.loadActions()
         }
     }
 
@@ -196,6 +198,8 @@ class AuthManager: ObservableObject {
 
         await MainActor.run {
             saveSession(authResponse)
+            // Reload actions after login (loads defaults if empty)
+            ActionsStore.shared.loadActions()
         }
 
         // Fetch subscription status after login
@@ -219,6 +223,9 @@ class AuthManager: ObservableObject {
         subscriptionStatus = "free"
         subscriptionEndDate = nil
         errorMessage = nil
+
+        // Clear all user actions on sign out
+        ActionsStore.shared.clearAllActions()
     }
 
     // MARK: - Fetch Subscription Status

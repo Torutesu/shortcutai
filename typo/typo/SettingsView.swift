@@ -32,6 +32,7 @@ func openAccessibilitySettings() {
 
 struct SettingsView: View {
     @StateObject private var store = ActionsStore.shared
+    @StateObject private var authManager = AuthManager.shared
     @State private var selectedTab = 1
     @State private var selectedAction: Action?
 
@@ -48,6 +49,20 @@ struct SettingsView: View {
     }
 
     var body: some View {
+        Group {
+            if authManager.isAuthenticated {
+                // Show full settings when logged in
+                authenticatedView
+            } else {
+                // Show login view when not logged in
+                LoginRequiredView()
+            }
+        }
+        .frame(width: 700, height: 540)
+        .preferredColorScheme(savedColorScheme)
+    }
+
+    private var authenticatedView: some View {
         VStack(spacing: 0) {
             // Custom Tab Bar - solo textos con Nunito
             HStack(spacing: 24) {
@@ -114,8 +129,248 @@ struct SettingsView: View {
             .transition(.opacity.combined(with: .scale(scale: 0.98)))
             .animation(.easeInOut(duration: 0.2), value: selectedTab)
         }
-        .frame(width: 700, height: 540)
-        .preferredColorScheme(savedColorScheme)
+    }
+}
+
+// MARK: - Login Required View
+
+struct LoginRequiredView: View {
+    @StateObject private var authManager = AuthManager.shared
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isSignUp = false
+    @State private var showForgotPassword = false
+    @State private var forgotPasswordEmail = ""
+    @State private var showPasswordResetSent = false
+
+    // App accent blue color
+    private var appBlue: Color {
+        Color(red: 0.0, green: 0.584, blue: 1.0)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 24) {
+                // Logo and welcome message
+                VStack(spacing: 16) {
+                    Image("logo textab")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 80, height: 80)
+
+                    Text("Welcome to TexTab")
+                        .font(.nunitoBold(size: 28))
+                        .foregroundColor(.primary)
+
+                    Text("Sign in to access your actions and settings")
+                        .font(.nunitoRegularBold(size: 15))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                // Form
+                VStack(spacing: 16) {
+                    // Email field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Email")
+                            .font(.nunitoRegularBold(size: 13))
+                            .foregroundColor(.secondary)
+
+                        TextField("you@example.com", text: $email)
+                            .textFieldStyle(.plain)
+                            .font(.nunitoRegularBold(size: 14))
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(NSColor.controlBackgroundColor))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+
+                    // Password field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Password")
+                            .font(.nunitoRegularBold(size: 13))
+                            .foregroundColor(.secondary)
+
+                        SecureField("••••••••", text: $password)
+                            .textFieldStyle(.plain)
+                            .font(.nunitoRegularBold(size: 14))
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(NSColor.controlBackgroundColor))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+
+                    // Forgot password (only for sign in)
+                    if !isSignUp {
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                forgotPasswordEmail = email
+                                showForgotPassword = true
+                            }) {
+                                Text("Forgot password?")
+                                    .font(.nunitoRegularBold(size: 12))
+                                    .foregroundColor(appBlue)
+                            }
+                            .buttonStyle(.plain)
+                            .pointerCursor()
+                        }
+                    }
+
+                    // Error message
+                    if let error = authManager.errorMessage {
+                        Text(error)
+                            .font(.nunitoRegularBold(size: 12))
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                    }
+
+                    // Submit button
+                    Button(action: {
+                        Task {
+                            do {
+                                if isSignUp {
+                                    try await authManager.signUp(email: email, password: password)
+                                } else {
+                                    try await authManager.signIn(email: email, password: password)
+                                }
+                            } catch {
+                                await MainActor.run {
+                                    authManager.errorMessage = error.localizedDescription
+                                }
+                            }
+                        }
+                    }) {
+                        HStack {
+                            if authManager.isLoading {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text(isSignUp ? "Create Account" : "Sign In")
+                                    .font(.nunitoBold(size: 15))
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(appBlue)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .pointerCursor()
+                    .disabled(authManager.isLoading || email.isEmpty || password.isEmpty)
+                    .opacity(email.isEmpty || password.isEmpty ? 0.6 : 1)
+
+                    // Toggle sign up/sign in
+                    HStack(spacing: 4) {
+                        Text(isSignUp ? "Already have an account?" : "Don't have an account?")
+                            .font(.nunitoRegularBold(size: 13))
+                            .foregroundColor(.secondary)
+
+                        Button(action: {
+                            withAnimation {
+                                isSignUp.toggle()
+                                authManager.errorMessage = nil
+                            }
+                        }) {
+                            Text(isSignUp ? "Sign In" : "Sign Up")
+                                .font(.nunitoBold(size: 13))
+                                .foregroundColor(appBlue)
+                        }
+                        .buttonStyle(.plain)
+                        .pointerCursor()
+                    }
+                }
+                .frame(maxWidth: 360)
+            }
+            .padding(40)
+
+            Spacer()
+        }
+        .background(Color(NSColor.windowBackgroundColor))
+        .sheet(isPresented: $showForgotPassword) {
+            forgotPasswordSheet
+        }
+        .alert("Password Reset Sent", isPresented: $showPasswordResetSent) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Check your email for a password reset link.")
+        }
+    }
+
+    // MARK: - Forgot Password Sheet
+
+    private var forgotPasswordSheet: some View {
+        VStack(spacing: 20) {
+            Text("Reset Password")
+                .font(.nunitoBold(size: 20))
+
+            Text("Enter your email and we'll send you a link to reset your password.")
+                .font(.nunitoRegularBold(size: 14))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            TextField("Email", text: $forgotPasswordEmail)
+                .textFieldStyle(.plain)
+                .font(.nunitoRegularBold(size: 14))
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
+
+            HStack(spacing: 12) {
+                Button("Cancel") {
+                    showForgotPassword = false
+                }
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    Task {
+                        do {
+                            try await authManager.sendPasswordReset(email: forgotPasswordEmail)
+                            showForgotPassword = false
+                            showPasswordResetSent = true
+                        } catch {
+                            authManager.errorMessage = error.localizedDescription
+                        }
+                    }
+                }) {
+                    Text("Send Reset Link")
+                        .font(.nunitoBold(size: 14))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(appBlue)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(forgotPasswordEmail.isEmpty)
+            }
+        }
+        .padding(30)
+        .frame(width: 400)
     }
 }
 
