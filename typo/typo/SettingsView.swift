@@ -2096,6 +2096,7 @@ struct AboutView: View {
     @StateObject private var authManager = AuthManager.shared
     @State private var mousePosition: CGPoint = .zero
     @State private var isHovering: Bool = false
+    @State private var showPaywall: Bool = false
 
     // App accent blue color
     private var appBlue: Color {
@@ -2351,7 +2352,7 @@ struct AboutView: View {
                             Spacer()
 
                             Button(action: {
-                                authManager.openStripePayment()
+                                showPaywall = true
                             }) {
                                 Text("Upgrade")
                                     .font(.nunitoRegularBold(size: 11))
@@ -2464,6 +2465,7 @@ struct AboutView: View {
         .padding(.leading, 30)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(NSColor.windowBackgroundColor))
+        .paywall(isPresented: $showPaywall)
     }
 }
 
