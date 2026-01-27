@@ -6,12 +6,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @StateObject private var onboardingManager = OnboardingManager.shared
     @State private var currentStep = 0
-    @State private var licenseInput = ""
-    @State private var isValidating = false
-    @State private var showError = false
-    @State private var errorMessage = ""
 
     var onComplete: () -> Void
 
@@ -30,11 +25,7 @@ struct OnboardingView: View {
                 ShortcutStep(onNext: nextStep, onBack: previousStep)
             case 4:
                 ActivationStep(
-                    licenseInput: $licenseInput,
-                    isValidating: $isValidating,
-                    showError: $showError,
-                    errorMessage: $errorMessage,
-                    onActivate: activateLicense,
+                    onComplete: onComplete,
                     onBack: previousStep
                 )
             default:
@@ -56,27 +47,6 @@ struct OnboardingView: View {
         withAnimation(.easeInOut(duration: 0.3)) {
             if currentStep > 0 {
                 currentStep -= 1
-            }
-        }
-    }
-
-    private func activateLicense() {
-        isValidating = true
-        showError = false
-
-        Task {
-            let isValid = await onboardingManager.validateLicense(licenseInput)
-
-            await MainActor.run {
-                isValidating = false
-
-                if isValid {
-                    onboardingManager.completeOnboarding()
-                    onComplete()
-                } else {
-                    showError = true
-                    errorMessage = "Invalid license key. Use format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                }
             }
         }
     }

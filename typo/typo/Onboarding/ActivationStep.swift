@@ -6,15 +6,17 @@
 import SwiftUI
 
 struct ActivationStep: View {
-    @Binding var licenseInput: String
-    @Binding var isValidating: Bool
-    @Binding var showError: Bool
-    @Binding var errorMessage: String
+    @StateObject private var authManager = AuthManager.shared
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isSignUp = false
 
-    var onActivate: () -> Void
+    var onComplete: () -> Void
     var onBack: () -> Void
 
-    private let brandBlue = Color(hex: "2196F3")
+    // Pastel peach/coral color for the right side
+    private let brandPastel = Color(hex: "F5D0C5")
+    private let placeholderGray = Color(hex: "b0b0b0")
 
     var body: some View {
         HStack(spacing: 0) {
@@ -26,69 +28,185 @@ struct ActivationStep: View {
                     Spacer()
                         .frame(height: 40)
 
-                    Text("Activate")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                    Text(isSignUp ? "Create Account" : "Sign In")
+                        .font(.nunitoBold(size: 32))
                         .foregroundColor(Color(hex: "1a1a1a"))
 
                     Spacer()
                         .frame(height: 10)
 
-                    Text("To continue, please activate your\nlicense of TexTab.")
-                        .font(.system(size: 14))
+                    Text("Sign in to sync your actions\nacross devices.")
+                        .font(.nunitoRegularBold(size: 14))
                         .foregroundColor(Color(hex: "666666"))
                         .lineSpacing(3)
 
                     Spacer()
                         .frame(height: 30)
 
-                    Text("Enter your license key below.")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundColor(Color(hex: "333333"))
+                    // Email field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Email")
+                            .font(.nunitoRegularBold(size: 14))
+                            .foregroundColor(Color(hex: "333333"))
+
+                        CustomTextField(text: $email, placeholder: "you@example.com")
+                            .frame(height: 20)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(hex: "f5f5f5"))
+                            )
+                    }
 
                     Spacer()
-                        .frame(height: 14)
+                        .frame(height: 16)
 
-                    // License key dots input
-                    LicenseDotsInput(licenseInput: $licenseInput)
+                    // Password field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Password")
+                            .font(.nunitoRegularBold(size: 14))
+                            .foregroundColor(Color(hex: "333333"))
 
-                    if showError {
-                        Text(errorMessage)
-                            .font(.system(size: 12))
+                        CustomSecureField(text: $password, placeholder: "••••••••")
+                            .frame(height: 20)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(hex: "f5f5f5"))
+                            )
+                    }
+
+                    // Error message
+                    if let error = authManager.errorMessage {
+                        Text(error)
+                            .font(.nunitoRegularBold(size: 12))
                             .foregroundColor(.red)
                             .padding(.top, 10)
                     }
 
                     Spacer()
+                        .frame(height: 24)
 
-                    // 3D Duolingo-style Activate button
-                    Button(action: onActivate) {
+                    // Sign In / Sign Up button - Black style like Google button
+                    Button(action: {
+                        Task {
+                            do {
+                                if isSignUp {
+                                    try await authManager.signUp(email: email, password: password)
+                                } else {
+                                    try await authManager.signIn(email: email, password: password)
+                                }
+                                await MainActor.run {
+                                    OnboardingManager.shared.completeOnboarding()
+                                    onComplete()
+                                }
+                            } catch {
+                                await MainActor.run {
+                                    authManager.errorMessage = error.localizedDescription
+                                }
+                            }
+                        }
+                    }) {
                         HStack(spacing: 8) {
-                            if isValidating {
+                            if authManager.isLoading {
                                 ProgressView()
                                     .scaleEffect(0.7)
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             }
-                            Text(isValidating ? "Validating..." : "Activate")
+                            Text(authManager.isLoading ? (isSignUp ? "Creating..." : "Signing in...") : (isSignUp ? "Create Account" : "Sign In"))
                         }
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundColor(licenseInput.filter({ $0 != "-" }).count >= 32 ? .white : Color(hex: "999999"))
+                        .font(.nunitoBold(size: 15))
+                        .foregroundColor(!email.isEmpty && !password.isEmpty ? .white : Color(hex: "999999"))
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
                         .background(
                             ZStack {
-                                // Bottom shadow layer (3D effect) - lighter color
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(licenseInput.filter({ $0 != "-" }).count >= 32 ? Color(hex: "58d965") : Color(hex: "e0e0e0"))
+                                    .fill(!email.isEmpty && !password.isEmpty ? Color(hex: "333333") : Color(hex: "e0e0e0"))
                                     .offset(y: 5)
 
-                                // Main button - original color
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(licenseInput.filter({ $0 != "-" }).count >= 32 ? Color(hex: "00ce44") : Color(hex: "cccccc"))
+                                    .fill(!email.isEmpty && !password.isEmpty ? Color(hex: "1a1a1a") : Color(hex: "cccccc"))
                             }
                         )
                     }
                     .buttonStyle(.plain)
-                    .disabled(licenseInput.filter({ $0 != "-" }).count < 32 || isValidating)
+                    .disabled(email.isEmpty || password.isEmpty || authManager.isLoading)
+
+                    Spacer()
+                        .frame(height: 16)
+
+                    // Divider
+                    HStack {
+                        Rectangle()
+                            .fill(Color(hex: "e0e0e0"))
+                            .frame(height: 1)
+                        Text("or")
+                            .font(.nunitoRegularBold(size: 12))
+                            .foregroundColor(Color(hex: "999999"))
+                            .padding(.horizontal, 8)
+                        Rectangle()
+                            .fill(Color(hex: "e0e0e0"))
+                            .frame(height: 1)
+                    }
+
+                    Spacer()
+                        .frame(height: 16)
+
+                    // Google Sign In button
+                    Button(action: {
+                        authManager.signInWithGoogle()
+                        // Listen for OAuth success
+                        NotificationCenter.default.addObserver(forName: NSNotification.Name("OAuthLoginSuccess"), object: nil, queue: .main) { _ in
+                            OnboardingManager.shared.completeOnboarding()
+                            onComplete()
+                        }
+                    }) {
+                        HStack(spacing: 10) {
+                            Image("google")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 18, height: 18)
+                            Text("Continue with Google")
+                                .font(.nunitoBold(size: 15))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color(hex: "333333"))
+                                    .offset(y: 5)
+
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color(hex: "1a1a1a"))
+                            }
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer()
+                        .frame(height: 20)
+
+                    // Toggle sign up/sign in
+                    HStack(spacing: 4) {
+                        Text(isSignUp ? "Already have an account?" : "Don't have an account?")
+                            .font(.nunitoRegularBold(size: 13))
+                            .foregroundColor(Color(hex: "666666"))
+
+                        Button(action: {
+                            withAnimation {
+                                isSignUp.toggle()
+                                authManager.errorMessage = nil
+                            }
+                        }) {
+                            Text(isSignUp ? "Sign In" : "Sign Up")
+                                .font(.nunitoBold(size: 13))
+                                .foregroundColor(Color(hex: "1a1a1a"))
+                        }
+                        .buttonStyle(.plain)
+                    }
 
                     Spacer()
                         .frame(height: 30)
@@ -97,44 +215,22 @@ struct ActivationStep: View {
                 .padding(.trailing, 24)
 
                 // Wavy edge
-                WavyEdgeBlue()
+                WavyEdgePastel()
                     .frame(width: 22)
                     .offset(x: 10)
             }
             .frame(width: 340)
 
-            // Right side - Blue with app icon
+            // Right side - Pastel with app icon
             ZStack {
-                brandBlue
+                brandPastel
 
-                // App icon in rounded frame
-                ZStack {
-                    // Outer glow/frame
-                    RoundedRectangle(cornerRadius: 32)
-                        .fill(Color.white.opacity(0.1))
-                        .frame(width: 180, height: 180)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 32)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 2)
-                        )
-
-                    // Inner icon container
-                    RoundedRectangle(cornerRadius: 26)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(hex: "ffecd2"), Color(hex: "fcb69f")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 130, height: 130)
-                        .shadow(color: Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
-
-                    // Icon
-                    Image(systemName: "text.cursor")
-                        .font(.system(size: 56, weight: .medium))
-                        .foregroundColor(Color(hex: "d4a574"))
-                }
+                // App icon
+                Image("logo textab")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 220, height: 220)
+                    .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
             }
             .frame(maxWidth: .infinity)
         }
@@ -142,98 +238,9 @@ struct ActivationStep: View {
     }
 }
 
-// MARK: - License Dots Input Component
+// MARK: - Wavy Edge Pastel
 
-struct LicenseDotsInput: View {
-    @Binding var licenseInput: String
-    @FocusState private var isFocused: Bool
-    @State private var cursorVisible = true
-
-    private let totalChars = 32
-    private let dotsPerRow = 16
-    private let totalRows = 3
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            // Hidden TextField to capture input
-            TextField("", text: $licenseInput)
-                .textFieldStyle(.plain)
-                .frame(width: 1, height: 1)
-                .opacity(0.01)
-                .focused($isFocused)
-                .onChange(of: licenseInput) { _, newValue in
-                    let cleaned = newValue.uppercased().filter { $0.isLetter || $0.isNumber || $0 == "-" }
-                    if cleaned.count <= totalChars + 4 { // 32 chars + 4 dashes max
-                        licenseInput = cleaned
-                    } else {
-                        licenseInput = String(cleaned.prefix(totalChars + 4))
-                    }
-                }
-
-            // 2 full rows of 16 + 1 row of 4 dots (36 total for 32 chars + 4 dashes)
-            VStack(alignment: .leading, spacing: 18) {
-                ForEach(0..<totalRows, id: \.self) { row in
-                    let dotsInThisRow = row < 2 ? dotsPerRow : 4 // Last row only has 4 dots
-                    HStack(spacing: 6) {
-                        ForEach(0..<dotsInThisRow, id: \.self) { col in
-                            let dotIndex = row * dotsPerRow + col
-                            let hasChar = dotIndex < licenseInput.count
-                            let isCursorPosition = dotIndex == licenseInput.count && isFocused
-
-                            ZStack {
-                                // Dot (hidden when char is typed or cursor is here)
-                                Circle()
-                                    .fill(Color(hex: "d0d0d0"))
-                                    .frame(width: 3, height: 3)
-                                    .opacity(hasChar || isCursorPosition ? 0 : 1)
-
-                                // Character
-                                if hasChar {
-                                    let index = licenseInput.index(licenseInput.startIndex, offsetBy: dotIndex)
-                                    Text(String(licenseInput[index]))
-                                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                                        .foregroundColor(Color(hex: "555555"))
-                                }
-
-                                // Cursor
-                                if isCursorPosition {
-                                    Rectangle()
-                                        .fill(Color(hex: "2196F3"))
-                                        .frame(width: 2, height: 14)
-                                        .opacity(cursorVisible ? 1 : 0)
-                                }
-                            }
-                            .frame(width: 9, height: 16)
-                        }
-                    }
-                }
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                isFocused = true
-            }
-        }
-        .onAppear {
-            isFocused = true
-            startCursorBlink()
-        }
-        .onChange(of: isFocused) { _, newValue in
-            if newValue {
-                startCursorBlink()
-            }
-        }
-    }
-
-    private func startCursorBlink() {
-        Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { _ in
-            cursorVisible.toggle()
-        }
-    }
-}
-
-// MARK: - Wavy Edge Blue
-
-struct WavyEdgeBlue: View {
+struct WavyEdgePastel: View {
     var body: some View {
         GeometryReader { geo in
             Path { path in
@@ -271,7 +278,99 @@ struct WavyEdgeBlue: View {
                 path.addLine(to: CGPoint(x: width, y: 0))
                 path.closeSubpath()
             }
-            .fill(Color(hex: "2196F3"))
+            .fill(Color(hex: "F5D0C5"))
+        }
+    }
+}
+
+// MARK: - Custom TextField with NSTextField
+
+struct CustomTextField: NSViewRepresentable {
+    @Binding var text: String
+    var placeholder: String
+
+    func makeNSView(context: Context) -> NSTextField {
+        let textField = NSTextField()
+        textField.delegate = context.coordinator
+        textField.isBordered = false
+        textField.drawsBackground = false
+        textField.focusRingType = .none
+        textField.font = NSFont(name: "Nunito-Bold", size: 15) ?? NSFont.systemFont(ofSize: 15)
+        textField.textColor = NSColor.black
+        textField.placeholderAttributedString = NSAttributedString(
+            string: placeholder,
+            attributes: [
+                .foregroundColor: NSColor.gray.withAlphaComponent(0.5),
+                .font: NSFont(name: "Nunito-Bold", size: 15) ?? NSFont.systemFont(ofSize: 15)
+            ]
+        )
+        return textField
+    }
+
+    func updateNSView(_ nsView: NSTextField, context: Context) {
+        nsView.stringValue = text
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: CustomTextField
+
+        init(_ parent: CustomTextField) {
+            self.parent = parent
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            if let textField = obj.object as? NSTextField {
+                parent.text = textField.stringValue
+            }
+        }
+    }
+}
+
+struct CustomSecureField: NSViewRepresentable {
+    @Binding var text: String
+    var placeholder: String
+
+    func makeNSView(context: Context) -> NSSecureTextField {
+        let textField = NSSecureTextField()
+        textField.delegate = context.coordinator
+        textField.isBordered = false
+        textField.drawsBackground = false
+        textField.focusRingType = .none
+        textField.font = NSFont(name: "Nunito-Bold", size: 15) ?? NSFont.systemFont(ofSize: 15)
+        textField.textColor = NSColor.black
+        textField.placeholderAttributedString = NSAttributedString(
+            string: placeholder,
+            attributes: [
+                .foregroundColor: NSColor.gray.withAlphaComponent(0.5),
+                .font: NSFont(name: "Nunito-Bold", size: 15) ?? NSFont.systemFont(ofSize: 15)
+            ]
+        )
+        return textField
+    }
+
+    func updateNSView(_ nsView: NSSecureTextField, context: Context) {
+        nsView.stringValue = text
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        var parent: CustomSecureField
+
+        init(_ parent: CustomSecureField) {
+            self.parent = parent
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            if let textField = obj.object as? NSTextField {
+                parent.text = textField.stringValue
+            }
         }
     }
 }
