@@ -670,27 +670,27 @@ struct ActionsSettingsView: View {
                                 selectedAction = action
                             }
                         }
+
+                        // New Action button - below last action
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .black))
+                            Text("New Action")
+                                .font(.nunitoRegularBold(size: 14))
+
+                            Spacer()
+                        }
+                        .foregroundColor(Color(red: 0.0, green: 0.584, blue: 1.0))
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 10)
+                        .onTapGesture {
+                            addNewAction()
+                        }
                     }
                     .padding(.vertical, 8)
                     .padding(.horizontal, 8)
                 }
                 .scrollIndicators(.hidden)
-
-                // New Action button - Fixed at bottom
-                HStack(spacing: 6) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .black))
-                    Text("New Action")
-                        .font(.nunitoRegularBold(size: 14))
-
-                    Spacer()
-                }
-                .foregroundColor(Color(red: 0.0, green: 0.584, blue: 1.0))
-                .padding(.vertical, 12)
-                .padding(.horizontal, 18)
-                .onTapGesture {
-                    addNewAction()
-                }
             }
             .frame(width: 220)
             .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
@@ -1020,8 +1020,6 @@ struct ActionEditorView: View {
                         )
 
                     }
-
-                    Spacer()
                 }
                 .padding(24)
 
