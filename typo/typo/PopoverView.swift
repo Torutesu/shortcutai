@@ -1141,11 +1141,20 @@ struct PopoverView: View {
     func copyToClipboard(_ text: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+        triggerCopyNotification()
+    }
+
+    func triggerCopyNotification() {
+        CopyNotificationWindow.show()
     }
 
     func replaceOriginalText(with text: String) {
-        // Copy the result to clipboard
-        copyToClipboard(text)
+        // Copy the result to clipboard (without notification)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+
+        // Show replaced notification
+        CopyNotificationWindow.show(message: "Text replaced", icon: "arrow.left.arrow.right")
 
         // Use the global app delegate to close popup, restore focus, and paste
         globalAppDelegate?.performPasteInPreviousApp()
@@ -1154,6 +1163,7 @@ struct PopoverView: View {
     func copyImageToClipboard(_ image: NSImage) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.writeObjects([image])
+        triggerCopyNotification()
     }
 
     func saveImage(_ image: NSImage) {
@@ -1629,6 +1639,119 @@ struct ColorPickerResultView: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+    }
+}
+
+// MARK: - Copy Notification Window
+
+class CopyNotificationWindow: NSWindow {
+    private static var currentWindow: CopyNotificationWindow?
+    private var dismissWorkItem: DispatchWorkItem?
+
+    static func show(message: String = "Copied to clipboard", icon: String = "checkmark") {
+        DispatchQueue.main.async {
+            // Dismiss any existing notification
+            currentWindow?.close()
+            currentWindow = nil
+
+            // Create the notification window
+            let notificationWindow = CopyNotificationWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 360, height: 56),
+                styleMask: [.borderless],
+                backing: .buffered,
+                defer: false
+            )
+
+            // Create the notification view
+            let notificationView = CopyNotificationView(message: message, icon: icon)
+            let hostingView = NSHostingView(rootView: notificationView)
+            notificationWindow.contentView = hostingView
+
+            notificationWindow.isOpaque = false
+            notificationWindow.backgroundColor = .clear
+            notificationWindow.level = .floating
+            notificationWindow.hasShadow = false
+            notificationWindow.ignoresMouseEvents = true
+            notificationWindow.isReleasedWhenClosed = false
+
+            // Position at bottom center of screen
+            if let screen = NSScreen.main {
+                let screenFrame = screen.visibleFrame
+                let x = screenFrame.midX - 180
+                let y = screenFrame.minY + 80
+                notificationWindow.setFrameOrigin(NSPoint(x: x, y: y))
+            }
+
+            // Store reference
+            currentWindow = notificationWindow
+
+            // Show with fade in
+            notificationWindow.alphaValue = 0
+            notificationWindow.orderFront(nil)
+
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.2
+                notificationWindow.animator().alphaValue = 1
+            }
+
+            // Schedule dismiss
+            let dismissWork = DispatchWorkItem { [weak notificationWindow] in
+                guard let window = notificationWindow else { return }
+                NSAnimationContext.runAnimationGroup({ context in
+                    context.duration = 0.2
+                    window.animator().alphaValue = 0
+                }, completionHandler: { [weak window] in
+                    window?.orderOut(nil)
+                    if currentWindow === window {
+                        currentWindow = nil
+                    }
+                })
+            }
+            notificationWindow.dismissWorkItem = dismissWork
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: dismissWork)
+        }
+    }
+
+    override func close() {
+        dismissWorkItem?.cancel()
+        dismissWorkItem = nil
+        super.close()
+    }
+}
+
+// MARK: - Copy Notification View
+
+struct CopyNotificationView: View {
+    var message: String = "Copied to clipboard"
+    var icon: String = "checkmark"
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 28, height: 28)
+
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+            }
+
+            Text(message)
+                .font(.nunitoBold(size: 15))
+                .foregroundColor(.primary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color(NSColor.windowBackgroundColor))
+                .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
     }
 }
 
