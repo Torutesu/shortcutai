@@ -2138,44 +2138,42 @@ struct AboutView: View {
     }
 
     var body: some View {
-        HStack(spacing: 30) {
+        HStack(alignment: .top, spacing: 30) {
             // Left side - App Logo with stats
-            VStack(spacing: 16) {
-                Spacer()
-
+            VStack(spacing: 24) {
                 // App Logo
                 Image("logo textab")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 140, height: 140)
+                    .frame(width: 150, height: 150)
 
                 // Member since
-                VStack(spacing: 2) {
+                VStack(spacing: 4) {
                     Text("MEMBER SINCE")
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.secondary.opacity(0.6))
                         .tracking(1.5)
 
                     Text(memberSinceDate)
-                        .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                        .font(.system(size: 18, weight: .semibold, design: .monospaced))
                         .foregroundColor(.primary)
                 }
 
                 // Stats row
-                HStack(spacing: 30) {
+                HStack(spacing: 36) {
                     // Actions
-                    VStack(spacing: 6) {
-                        HStack(spacing: 4) {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 6) {
                             Image(systemName: "laurel.leading")
-                                .font(.system(size: 20))
+                                .font(.system(size: 24))
                                 .foregroundColor(.secondary.opacity(0.5))
 
                             Text("\(actionsCount)")
-                                .font(.nunitoBlack(size: 28))
+                                .font(.nunitoBlack(size: 36))
                                 .foregroundColor(.primary)
 
                             Image(systemName: "laurel.trailing")
-                                .font(.system(size: 20))
+                                .font(.system(size: 24))
                                 .foregroundColor(.secondary.opacity(0.5))
                         }
 
@@ -2185,18 +2183,18 @@ struct AboutView: View {
                     }
 
                     // Days
-                    VStack(spacing: 6) {
-                        HStack(spacing: 4) {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 6) {
                             Image(systemName: "laurel.leading")
-                                .font(.system(size: 20))
+                                .font(.system(size: 24))
                                 .foregroundColor(.secondary.opacity(0.5))
 
                             Text("\(daysSinceCreation)")
-                                .font(.nunitoBlack(size: 28))
+                                .font(.nunitoBlack(size: 36))
                                 .foregroundColor(.primary)
 
                             Image(systemName: "laurel.trailing")
-                                .font(.system(size: 20))
+                                .font(.system(size: 24))
                                 .foregroundColor(.secondary.opacity(0.5))
                         }
 
@@ -2205,40 +2203,39 @@ struct AboutView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-
-                Spacer()
             }
-            .frame(width: 220)
+            .frame(width: 280)
+            .padding(.top, 16)
 
             // Right side - Account info and Buttons
             VStack(alignment: .leading, spacing: 0) {
                 // Account section
                 VStack(spacing: 0) {
                     // User info row
-                    HStack(spacing: 14) {
+                    HStack(spacing: 16) {
                         ZStack {
                             Circle()
                                 .fill(appBlue.opacity(0.1))
-                                .frame(width: 32, height: 32)
+                                .frame(width: 44, height: 44)
 
                             Text(String(authManager.currentUser?.email?.prefix(1).uppercased() ?? "U"))
-                                .font(.nunitoBold(size: 14))
+                                .font(.nunitoBold(size: 18))
                                 .foregroundColor(appBlue)
                         }
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(authManager.currentUser?.email ?? "User")
-                                .font(.nunitoBold(size: 14))
+                                .font(.nunitoBold(size: 16))
                                 .foregroundColor(.primary)
                                 .lineLimit(1)
 
-                            HStack(spacing: 4) {
+                            HStack(spacing: 5) {
                                 Image(systemName: authManager.isPro ? "checkmark.seal.fill" : "person.fill")
-                                    .font(.system(size: 10))
+                                    .font(.system(size: 12))
                                     .foregroundColor(authManager.isPro ? .green : .secondary)
 
                                 Text(authManager.isPro ? "Pro Member" : "Free Plan")
-                                    .font(.nunitoRegularBold(size: 11))
+                                    .font(.nunitoRegularBold(size: 13))
                                     .foregroundColor(authManager.isPro ? .green : .secondary)
                             }
                         }
@@ -2249,10 +2246,10 @@ struct AboutView: View {
                             authManager.signOut()
                         }) {
                             Text("Sign Out")
-                                .font(.nunitoRegularBold(size: 11))
+                                .font(.nunitoRegularBold(size: 12))
                                 .foregroundColor(.red)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
                                 .background(
                                     Capsule()
                                         .fill(Color.red.opacity(0.1))
@@ -2261,24 +2258,24 @@ struct AboutView: View {
                         .buttonStyle(.plain)
                         .pointerCursor()
                     }
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 20)
 
                     Divider()
 
                     // Subscription row
-                    HStack(spacing: 14) {
+                    HStack(spacing: 16) {
                         Image(systemName: authManager.isPro ? "creditcard" : "crown")
-                            .font(.system(size: authManager.isPro ? 18 : 20))
+                            .font(.system(size: authManager.isPro ? 22 : 24))
                             .foregroundColor(Color.gray.opacity(0.45))
-                            .frame(width: 30)
+                            .frame(width: 36)
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(authManager.isPro ? "Manage Subscription" : "Upgrade to Pro")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.primary)
 
                             Text(authManager.isPro ? "View billing and manage plan" : "Unlimited actions • $14.99/year")
-                                .font(.system(size: 11))
+                                .font(.system(size: 13))
                                 .foregroundColor(.secondary)
                         }
 
@@ -2292,10 +2289,10 @@ struct AboutView: View {
                             }
                         }) {
                             Text(authManager.isPro ? "Manage" : "Upgrade")
-                                .font(.nunitoRegularBold(size: 11))
+                                .font(.nunitoRegularBold(size: 12))
                                 .foregroundColor(authManager.isPro ? .secondary : appBlue)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
                                 .background(
                                     Capsule()
                                         .fill(authManager.isPro ? Color.gray.opacity(0.1) : appBlue.opacity(0.1))
@@ -2304,24 +2301,24 @@ struct AboutView: View {
                         .buttonStyle(.plain)
                         .pointerCursor()
                     }
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 20)
 
                     Divider()
 
                     // Check for Updates row
-                    HStack(spacing: 14) {
+                    HStack(spacing: 16) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 18))
+                            .font(.system(size: 22))
                             .foregroundColor(Color.gray.opacity(0.45))
-                            .frame(width: 30)
+                            .frame(width: 36)
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text("Check for Updates")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.primary)
 
                             Text("Keep TexTab up to date")
-                                .font(.system(size: 11))
+                                .font(.system(size: 13))
                                 .foregroundColor(.secondary)
                         }
 
@@ -2333,10 +2330,10 @@ struct AboutView: View {
                             }
                         }) {
                             Text("Check")
-                                .font(.nunitoRegularBold(size: 11))
+                                .font(.nunitoRegularBold(size: 12))
                                 .foregroundColor(.secondary)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
                                 .background(
                                     Capsule()
                                         .fill(Color.gray.opacity(0.1))
@@ -2345,24 +2342,24 @@ struct AboutView: View {
                         .buttonStyle(.plain)
                         .pointerCursor()
                     }
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 20)
 
                     Divider()
 
                     // Contact Support row
-                    HStack(spacing: 14) {
+                    HStack(spacing: 16) {
                         Image(systemName: "envelope")
-                            .font(.system(size: 18))
+                            .font(.system(size: 22))
                             .foregroundColor(Color.gray.opacity(0.45))
-                            .frame(width: 30)
+                            .frame(width: 36)
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text("Contact Support")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.primary)
 
                             Text("Get help from our team")
-                                .font(.system(size: 11))
+                                .font(.system(size: 13))
                                 .foregroundColor(.secondary)
                         }
 
@@ -2374,26 +2371,20 @@ struct AboutView: View {
                             }
                         }) {
                             Text("Contact")
-                                .font(.nunitoRegularBold(size: 11))
+                                .font(.nunitoRegularBold(size: 12))
                                 .foregroundColor(.secondary)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
                                 .background(
                                     Capsule()
-                                            .fill(Color.gray.opacity(0.1))
+                                        .fill(Color.gray.opacity(0.1))
                                 )
                         }
                         .buttonStyle(.plain)
                         .pointerCursor()
                     }
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 20)
                 }
-
-                Spacer().frame(height: 24)
-
-                // Animated Cat Logo
-                AnimatedCatLogo(subtitle: "© 2026 All rights reserved.")
-                    .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.trailing, 30)
