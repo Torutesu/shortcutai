@@ -20,13 +20,13 @@ struct FeaturesStep: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // Full gradient background (no wave, just solid gradient like step 1 after wave rises)
+                // Full gradient background - blue/turquoise theme
                 LinearGradient(
                     colors: [
-                        Color(hex: "E8909C"),
-                        Color(hex: "F4A5B0"),
-                        Color(hex: "FBBAC4"),
-                        Color(hex: "FDD5DB")
+                        Color(hex: "007AFF"),  // System blue
+                        Color(hex: "00A3FF"),  // Lighter blue
+                        Color(hex: "00C8E8"),  // Turquoise
+                        Color(hex: "5CE1E6")   // Light turquoise
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -38,8 +38,8 @@ struct FeaturesStep: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: "E8909C"),
-                                Color(hex: "F4A5B0")
+                                Color(hex: "007AFF"),
+                                Color(hex: "00A3FF")
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -88,7 +88,7 @@ struct FeaturesStep: View {
                         }
                     }
 
-                    // Continue button - same style as WelcomeStep
+                    // Continue button - blue style
                     Button(action: onNext) {
                         Text("Continue")
                             .font(.custom("Nunito-Bold", size: 17))
@@ -98,12 +98,12 @@ struct FeaturesStep: View {
                                 ZStack {
                                     // Bottom shadow layer (3D effect)
                                     RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(hex: "333333"))
+                                        .fill(Color(hex: "004BB5"))
                                         .offset(y: 5)
 
                                     // Main button
                                     RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(hex: "1a1a1a"))
+                                        .fill(Color(hex: "007AFF"))
                                 }
                             )
                     }
