@@ -55,6 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var pendingAction: Action?
     var cancellables = Set<AnyCancellable>()
     var previousActiveApp: NSRunningApplication?
+    var menuBarMenuController = MenuBarMenuWindowController()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         globalAppDelegate = self
@@ -332,7 +333,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let event = NSApp.currentEvent!
 
         if event.type == .rightMouseUp {
-            // Click derecho: mostrar menú
+            // Click derecho: mostrar menú estándar
             let menu = NSMenu()
 
             let openItem = NSMenuItem(title: "Open TexTab", action: #selector(showPopover), keyEquivalent: "")
@@ -353,8 +354,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             statusItem?.button?.performClick(nil)
             statusItem?.menu = nil
         } else {
-            // Click izquierdo: abrir popup
-            togglePopover()
+            // Click izquierdo: mostrar menú personalizado animado
+            if menuBarMenuController.isMenuVisible {
+                menuBarMenuController.closeMenu()
+            } else {
+                guard let statusItem = statusItem else { return }
+                menuBarMenuController.showMenu(
+                    relativeTo: statusItem,
+                    onOpenTexTab: { [weak self] in
+                        self?.showPopover()
+                    },
+                    onSettings: { [weak self] in
+                        self?.openSettings()
+                    },
+                    onQuit: { [weak self] in
+                        self?.quitApp()
+                    }
+                )
+            }
         }
     }
 
