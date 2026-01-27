@@ -1313,7 +1313,7 @@ struct ActionRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: action.icon)
-                .font(.system(size: 16))
+                .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.gray)
                 .frame(width: 24)
 
