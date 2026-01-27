@@ -35,6 +35,18 @@ struct SettingsView: View {
     @State private var selectedTab = 1
     @State private var selectedAction: Action?
 
+    // Theme preference (using AppStorage for automatic updates)
+    @AppStorage("appTheme") private var appTheme: String = "System"
+
+    // Get saved color scheme for theme
+    private var savedColorScheme: ColorScheme? {
+        switch appTheme {
+        case "Light": return .light
+        case "Dark": return .dark
+        default: return nil // System follows OS
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Custom Tab Bar - solo textos con Nunito
@@ -96,6 +108,7 @@ struct SettingsView: View {
             .animation(.easeInOut(duration: 0.2), value: selectedTab)
         }
         .frame(width: 700, height: 540)
+        .preferredColorScheme(savedColorScheme)
     }
 }
 
@@ -140,13 +153,17 @@ struct GeneralSettingsView: View {
     @State private var perplexityApiKeyInput: String = ""
     @State private var selectedProvider: AIProvider = .openai
     @State private var selectedModelId: String = ""
-    @State private var selectedTheme: AppTheme = .system
+    @AppStorage("appTheme") private var appThemeString: String = "System"
     @State private var showModelTooltip: Bool = false
     @State private var isRecordingMainShortcut = false
     @State private var mainRecordedKeys: [String] = []
     @State private var mainShortcutConflict: String? = nil
     @State private var mainShortcutMonitor: Any? = nil
     @Environment(\.colorScheme) var colorScheme
+
+    private var selectedTheme: AppTheme {
+        get { AppTheme(rawValue: appThemeString) ?? .system }
+    }
 
     private var availableModels: [AIModel] {
         AIModel.models(for: selectedProvider)
@@ -353,7 +370,7 @@ struct GeneralSettingsView: View {
                             ForEach(AppTheme.allCases, id: \.self) { theme in
                                 Button(action: {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                        selectedTheme = theme
+                                        appThemeString = theme.rawValue
                                         applyTheme(theme)
                                     }
                                 }) {
@@ -447,17 +464,12 @@ struct GeneralSettingsView: View {
         }
 
         NSApp.appearance = appearance
-
-        // Save preference
-        UserDefaults.standard.set(theme.rawValue, forKey: "appTheme")
+        // appThemeString is already set via @AppStorage, no need to save again
     }
 
     private func loadSavedTheme() {
-        if let savedTheme = UserDefaults.standard.string(forKey: "appTheme"),
-           let theme = AppTheme(rawValue: savedTheme) {
-            selectedTheme = theme
-            applyTheme(theme)
-        }
+        // Apply the theme from @AppStorage on appear
+        applyTheme(selectedTheme)
     }
 
     private func stopRecordingMainShortcut() {

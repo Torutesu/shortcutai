@@ -58,12 +58,24 @@ struct PopoverView: View {
     // Chat state
     @State private var showChat = false
 
+    // Theme preference (using AppStorage for automatic updates)
+    @AppStorage("appTheme") private var appTheme: String = "System"
+
     var onClose: () -> Void
     var onOpenSettings: () -> Void
     var initialAction: Action?
 
     var popoverWidth: CGFloat {
         initialAction != nil ? 560 : 320
+    }
+
+    // Get saved color scheme for theme
+    private var savedColorScheme: ColorScheme? {
+        switch appTheme {
+        case "Light": return .light
+        case "Dark": return .dark
+        default: return nil // System follows OS
+        }
     }
 
     var body: some View {
@@ -113,6 +125,7 @@ struct PopoverView: View {
                 .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
             }
         }
+        .preferredColorScheme(savedColorScheme)
         .onAppear {
             // Reset all states when popup appears
             clipboardImage = nil
@@ -1194,7 +1207,7 @@ struct ChatButtonView: View {
                 Spacer()
 
                 Image(systemName: "arrow.right.circle.fill")
-                    .foregroundColor(appBlue.opacity(0.6))
+                    .foregroundColor(appBlue)
                     .font(.system(size: 16))
             }
             .padding(.horizontal, 12)
@@ -1428,9 +1441,21 @@ struct ColorPickerResultView: View {
     let action: Action
     var onClose: () -> Void
 
+    // Theme preference (using AppStorage for automatic updates)
+    @AppStorage("appTheme") private var appTheme: String = "System"
+
     // App accent blue color
     private var appBlue: Color {
         Color(red: 0.0, green: 0.584, blue: 1.0)
+    }
+
+    // Get saved color scheme for theme
+    private var savedColorScheme: ColorScheme? {
+        switch appTheme {
+        case "Light": return .light
+        case "Dark": return .dark
+        default: return nil // System follows OS
+        }
     }
 
     var extractedColor: NSColor? {
@@ -1581,6 +1606,7 @@ struct ColorPickerResultView: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+        .preferredColorScheme(savedColorScheme)
     }
 }
 
