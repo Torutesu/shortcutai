@@ -104,7 +104,7 @@ struct PermissionsStep: View {
                                 }
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PermissionsNoFadeButtonStyle())
 
                     Spacer()
                         .frame(height: 30)
@@ -405,5 +405,14 @@ struct WavyEdge: View {
             .fill(isGreen ? Color(hex: "00ce44") : Color(hex: "F9A825"))
         }
         .animation(.easeInOut(duration: 0.5), value: isGreen)
+    }
+}
+
+// MARK: - No Fade Button Style
+
+struct PermissionsNoFadeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(1)
     }
 }

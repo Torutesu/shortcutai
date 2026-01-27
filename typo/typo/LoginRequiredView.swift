@@ -136,17 +136,25 @@ struct LoginRequiredView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
                         .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(!email.isEmpty && !password.isEmpty ? Color(hex: "333333") : Color(hex: "e0e0e0"))
-                                    .offset(y: 5)
-
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(!email.isEmpty && !password.isEmpty ? Color(hex: "1a1a1a") : Color(hex: "cccccc"))
+                            Group {
+                                if !email.isEmpty && !password.isEmpty {
+                                    // Enabled: 3D effect
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color(hex: "333333"))
+                                            .offset(y: 5)
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color(hex: "1a1a1a"))
+                                    }
+                                } else {
+                                    // Disabled: flat like inputs
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(Color(hex: "e8e8e8"))
+                                }
                             }
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(NoFadeButtonStyle())
                     .disabled(email.isEmpty || password.isEmpty || authManager.isLoading)
 
                     Spacer()
@@ -195,7 +203,7 @@ struct LoginRequiredView: View {
                             }
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(NoFadeButtonStyle())
 
                     Spacer()
                         .frame(height: 20)
@@ -455,6 +463,15 @@ struct LoginCustomSecureField: NSViewRepresentable {
                 parent.text = textField.stringValue
             }
         }
+    }
+}
+
+// MARK: - No Fade Button Style
+
+struct NoFadeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(1)
     }
 }
 

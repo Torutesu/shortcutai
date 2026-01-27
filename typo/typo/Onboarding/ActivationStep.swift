@@ -120,17 +120,25 @@ struct ActivationStep: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
                         .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(!email.isEmpty && !password.isEmpty ? Color(hex: "333333") : Color(hex: "e0e0e0"))
-                                    .offset(y: 5)
-
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(!email.isEmpty && !password.isEmpty ? Color(hex: "1a1a1a") : Color(hex: "cccccc"))
+                            Group {
+                                if !email.isEmpty && !password.isEmpty {
+                                    // Enabled: 3D effect
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color(hex: "333333"))
+                                            .offset(y: 5)
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color(hex: "1a1a1a"))
+                                    }
+                                } else {
+                                    // Disabled: flat like inputs
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(Color(hex: "e8e8e8"))
+                                }
                             }
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(OnboardingNoFadeButtonStyle())
                     .disabled(email.isEmpty || password.isEmpty || authManager.isLoading)
 
                     Spacer()
@@ -184,7 +192,7 @@ struct ActivationStep: View {
                             }
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(OnboardingNoFadeButtonStyle())
 
                     Spacer()
                         .frame(height: 20)
@@ -372,5 +380,14 @@ struct CustomSecureField: NSViewRepresentable {
                 parent.text = textField.stringValue
             }
         }
+    }
+}
+
+// MARK: - No Fade Button Style
+
+struct OnboardingNoFadeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(1)
     }
 }

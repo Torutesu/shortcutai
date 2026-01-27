@@ -81,7 +81,7 @@ struct WelcomeStep: View {
                                 }
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(WelcomeNoFadeButtonStyle())
                     .opacity(buttonOpacity)
                     .offset(y: buttonOffset)
                 }
@@ -148,5 +148,14 @@ struct WelcomeWaveShape: Shape {
         path.closeSubpath()
 
         return path
+    }
+}
+
+// MARK: - No Fade Button Style
+
+struct WelcomeNoFadeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(1)
     }
 }

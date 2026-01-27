@@ -118,7 +118,7 @@ struct ShortcutStep: View {
                                 }
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ShortcutNoFadeButtonStyle())
 
                     Spacer()
                         .frame(height: 30)
@@ -539,5 +539,14 @@ struct WavyEdgeOrange: View {
             }
             .fill(Color(hex: "ff7300"))
         }
+    }
+}
+
+// MARK: - No Fade Button Style
+
+struct ShortcutNoFadeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(1)
     }
 }
