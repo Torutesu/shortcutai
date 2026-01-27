@@ -73,6 +73,26 @@ struct AIModel: Identifiable, Hashable, Codable {
         AIModel(id: "mistralai/mistral-large", name: "Mistral Large", provider: .openrouter,
                specs: ModelSpecs(speed: 3, intelligence: 4, tokenUsage: 3, description: "Mistral's flagship model")),
 
+        // DeepSeek Models
+        AIModel(id: "deepseek/deepseek-r1", name: "DeepSeek R1", provider: .openrouter,
+               specs: ModelSpecs(speed: 2, intelligence: 5, tokenUsage: 4, description: "Advanced reasoning model, very affordable")),
+        AIModel(id: "deepseek/deepseek-chat", name: "DeepSeek Chat", provider: .openrouter,
+               specs: ModelSpecs(speed: 4, intelligence: 4, tokenUsage: 5, description: "Fast and capable chat model")),
+        AIModel(id: "deepseek/deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill 70B", provider: .openrouter,
+               specs: ModelSpecs(speed: 3, intelligence: 4, tokenUsage: 5, description: "Distilled reasoning model")),
+
+        // Google Models
+        AIModel(id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash (Free)", provider: .openrouter,
+               specs: ModelSpecs(speed: 5, intelligence: 4, tokenUsage: 5, description: "Free experimental Gemini model")),
+        AIModel(id: "google/gemini-exp-1206:free", name: "Gemini Exp 1206 (Free)", provider: .openrouter,
+               specs: ModelSpecs(speed: 4, intelligence: 5, tokenUsage: 5, description: "Free experimental Gemini")),
+
+        // Free Models
+        AIModel(id: "meta-llama/llama-3.2-3b-instruct:free", name: "Llama 3.2 3B (Free)", provider: .openrouter,
+               specs: ModelSpecs(speed: 5, intelligence: 3, tokenUsage: 5, description: "Free lightweight Llama model")),
+        AIModel(id: "microsoft/phi-3-mini-128k-instruct:free", name: "Phi-3 Mini (Free)", provider: .openrouter,
+               specs: ModelSpecs(speed: 5, intelligence: 3, tokenUsage: 5, description: "Free compact Microsoft model")),
+
         // Perplexity Models
         AIModel(id: "llama-3.1-sonar-small-128k-online", name: "Sonar Small", provider: .perplexity,
                specs: ModelSpecs(speed: 5, intelligence: 3, tokenUsage: 5, description: "Fast online search model")),
