@@ -13,81 +13,111 @@ struct FeaturesStep: View {
     @State private var player: AVPlayer?
     @State private var showKeys = false
     @State private var keyStates: [Bool] = [false, false, false] // ⌘, ⇧, T
+    @State private var wavePhase: CGFloat = 0
 
     private let keys = ["⌘", "⇧", "T"]
 
     var body: some View {
-        ZStack {
-            // White background
-            Color.white
+        GeometryReader { geo in
+            ZStack {
+                // Full gradient background (no wave, just solid gradient like step 1 after wave rises)
+                LinearGradient(
+                    colors: [
+                        Color(hex: "E8909C"),
+                        Color(hex: "F4A5B0"),
+                        Color(hex: "FBBAC4"),
+                        Color(hex: "FDD5DB")
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer()
-                    .frame(height: 30)
+                // Wave at top for visual effect
+                FeaturesWaveShape(phase: wavePhase, frequency: 2, amplitude: 20)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "E8909C"),
+                                Color(hex: "F4A5B0")
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(height: 100)
+                    .offset(y: -geo.size.height / 2 + 50)
 
-                Text("How to open TexTab")
-                    .font(.custom("Nunito-Black", size: 32))
-                    .foregroundColor(.black)
+                // Content centered
+                VStack(spacing: 40) {
+                    VStack(spacing: 20) {
+                        Text("How to open TexTab")
+                            .font(.custom("Nunito-Black", size: 32))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 3)
 
-                Spacer()
-                    .frame(height: 24)
+                        // Video player with keyboard overlay
+                        if let player = player {
+                            ZStack(alignment: .bottom) {
+                                VideoPlayerView(player: player)
+                                    .aspectRatio(16/9, contentMode: .fit)
+                                    .frame(maxWidth: 580)
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                                    )
+                                    .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
 
-                // Video player with keyboard overlay
-                if let player = player {
-                    ZStack(alignment: .bottom) {
-                        VideoPlayerView(player: player)
-                            .aspectRatio(16/9, contentMode: .fit)
-                            .frame(maxWidth: 600)
-                            .cornerRadius(12)
-
-                        // Keyboard shortcut overlay at bottom of video
-                        if showKeys {
-                            HStack(spacing: 8) {
-                                ForEach(0..<3, id: \.self) { index in
-                                    OnboardingKey(text: keys[index], isPressed: keyStates[index])
-                                        .scaleEffect(keyStates[index] ? 1.0 : 0.5)
-                                        .opacity(keyStates[index] ? 1.0 : 0.0)
-                                        .animation(
-                                            .spring(response: 0.35, dampingFraction: 0.6, blendDuration: 0),
-                                            value: keyStates[index]
-                                        )
+                                // Keyboard shortcut overlay at bottom of video
+                                if showKeys {
+                                    HStack(spacing: 8) {
+                                        ForEach(0..<3, id: \.self) { index in
+                                            OnboardingKey(text: keys[index], isPressed: keyStates[index])
+                                                .scaleEffect(keyStates[index] ? 1.0 : 0.5)
+                                                .opacity(keyStates[index] ? 1.0 : 0.0)
+                                                .animation(
+                                                    .spring(response: 0.35, dampingFraction: 0.6, blendDuration: 0),
+                                                    value: keyStates[index]
+                                                )
+                                        }
+                                    }
+                                    .padding(.bottom, 20)
                                 }
                             }
-                            .padding(.bottom, 20)
                         }
                     }
+
+                    // Continue button - same style as WelcomeStep
+                    Button(action: onNext) {
+                        Text("Continue")
+                            .font(.custom("Nunito-Bold", size: 17))
+                            .foregroundColor(.white)
+                            .frame(width: 200, height: 52)
+                            .background(
+                                ZStack {
+                                    // Bottom shadow layer (3D effect)
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(hex: "333333"))
+                                        .offset(y: 5)
+
+                                    // Main button
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(hex: "1a1a1a"))
+                                }
+                            )
+                    }
+                    .buttonStyle(FeaturesNoFadeButtonStyle())
                 }
-
-                Spacer()
-
-                // Continue button - same style as WelcomeStep
-                Button(action: onNext) {
-                    Text("Continue")
-                        .font(.custom("Nunito-Bold", size: 17))
-                        .foregroundColor(.white)
-                        .frame(width: 200, height: 52)
-                        .background(
-                            ZStack {
-                                // Bottom shadow layer (3D effect)
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(hex: "333333"))
-                                    .offset(y: 5)
-
-                                // Main button
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(hex: "1a1a1a"))
-                            }
-                        )
-                }
-                .buttonStyle(FeaturesNoFadeButtonStyle())
-
-                Spacer()
-                    .frame(height: 30)
+                .position(x: geo.size.width / 2, y: geo.size.height / 2)
             }
-        }
-        .onAppear {
-            setupPlayer()
+            .onAppear {
+                setupPlayer()
+                // Continuous wave animation
+                withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) {
+                    wavePhase = .pi * 2
+                }
+            }
         }
     }
 
@@ -169,6 +199,35 @@ struct FeaturesNoFadeButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .opacity(1)
+    }
+}
+
+// MARK: - Wave Shape
+struct FeaturesWaveShape: Shape {
+    var phase: CGFloat
+    var frequency: CGFloat
+    var amplitude: CGFloat
+
+    var animatableData: CGFloat {
+        get { phase }
+        set { phase = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        path.move(to: CGPoint(x: 0, y: rect.height))
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height))
+        path.addLine(to: CGPoint(x: rect.width, y: 0))
+
+        for x in stride(from: rect.width, through: 0, by: -2) {
+            let normalizedX = x / rect.width
+            let y = sin(normalizedX * .pi * frequency + phase) * amplitude
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+
+        path.closeSubpath()
+        return path
     }
 }
 
