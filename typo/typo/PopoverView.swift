@@ -169,50 +169,27 @@ struct PopoverView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            VStack(spacing: 12) {
-                // Google Sign In button
-                Button(action: {
-                    AuthManager.shared.signInWithGoogle()
-                }) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "g.circle.fill")
-                            .font(.system(size: 16))
-                        Text("Continue with Google")
-                            .font(.nunitoBold(size: 14))
-                    }
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
+            // Sign Up button - Black 3D style
+            Button(action: {
+                onOpenSettings()
+            }) {
+                Text("Sign Up")
+                    .font(.nunitoBold(size: 15))
+                    .foregroundColor(.white)
+                    .frame(width: 200)
                     .padding(.vertical, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(NSColor.controlBackgroundColor))
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color(hex: "333333"))
+                                .offset(y: 5)
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color(hex: "1a1a1a"))
+                        }
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .pointerCursor()
-
-                // Or sign in with email
-                Button(action: {
-                    onOpenSettings()
-                }) {
-                    Text("Sign in with Email")
-                        .font(.nunitoBold(size: 14))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(red: 0.0, green: 0.584, blue: 1.0))
-                        )
-                }
-                .buttonStyle(.plain)
-                .pointerCursor()
             }
-            .frame(width: 200)
+            .buttonStyle(PopoverNoFadeButtonStyle())
+            .pointerCursor()
 
             Spacer()
 
@@ -1811,6 +1788,15 @@ struct CopyNotificationView: View {
             RoundedRectangle(cornerRadius: 24)
                 .fill(Color(NSColor.windowBackgroundColor))
         )
+    }
+}
+
+// MARK: - No Fade Button Style
+
+struct PopoverNoFadeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(1)
     }
 }
 
