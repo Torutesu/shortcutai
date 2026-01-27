@@ -4,128 +4,198 @@
 //
 
 import SwiftUI
-
-struct FeatureItem: Identifiable {
-    let id = UUID()
-    let icon: String
-    let title: String
-    let description: String
-}
+import AVKit
 
 struct FeaturesStep: View {
     var onNext: () -> Void
     var onBack: () -> Void
 
-    private let features = [
-        FeatureItem(icon: "wand.and.stars", title: "AI Transformations", description: "Fix grammar, rephrase, translate instantly"),
-        FeatureItem(icon: "globe", title: "Web Search", description: "Search with Perplexity AI integration"),
-        FeatureItem(icon: "keyboard", title: "Global Shortcuts", description: "Works anywhere with custom hotkeys"),
-        FeatureItem(icon: "puzzlepiece.extension", title: "Plugins", description: "QR codes, color picker, and more")
-    ]
+    @State private var player: AVPlayer?
+    @State private var showKeys = false
+    @State private var keyStates: [Bool] = [false, false, false] // ⌘, ⇧, T
+
+    private let keys = ["⌘", "⇧", "T"]
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(hex: "1E88E5"),
-                    Color(hex: "42A5F5"),
-                    Color(hex: "4DD0E1")
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // White background
+            Color.white
+                .ignoresSafeArea()
 
-            VStack(spacing: 20) {
+            VStack(spacing: 0) {
                 Spacer()
-                    .frame(height: 16)
+                    .frame(height: 30)
 
-                Text("What TexTab can do")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
+                Text("How to open TexTab")
+                    .font(.custom("Nunito-Black", size: 32))
+                    .foregroundColor(.black)
 
-                // Features grid
-                VStack(spacing: 12) {
-                    ForEach(features) { feature in
-                        HStack(spacing: 16) {
-                            // Icon
+                Spacer()
+                    .frame(height: 24)
+
+                // Video player with keyboard overlay
+                if let player = player {
+                    ZStack(alignment: .bottom) {
+                        VideoPlayerView(player: player)
+                            .aspectRatio(16/9, contentMode: .fit)
+                            .frame(maxWidth: 600)
+                            .cornerRadius(12)
+
+                        // Keyboard shortcut overlay at bottom of video
+                        if showKeys {
+                            HStack(spacing: 8) {
+                                ForEach(0..<3, id: \.self) { index in
+                                    OnboardingKey(text: keys[index], isPressed: keyStates[index])
+                                        .scaleEffect(keyStates[index] ? 1.0 : 0.5)
+                                        .opacity(keyStates[index] ? 1.0 : 0.0)
+                                        .animation(
+                                            .spring(response: 0.35, dampingFraction: 0.6, blendDuration: 0),
+                                            value: keyStates[index]
+                                        )
+                                }
+                            }
+                            .padding(.bottom, 20)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                // Continue button - same style as WelcomeStep
+                Button(action: onNext) {
+                    Text("Continue")
+                        .font(.custom("Nunito-Bold", size: 17))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 52)
+                        .background(
                             ZStack {
-                                Circle()
-                                    .fill(Color.white.opacity(0.2))
-                                    .frame(width: 44, height: 44)
+                                // Bottom shadow layer (3D effect)
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(hex: "333333"))
+                                    .offset(y: 5)
 
-                                Image(systemName: feature.icon)
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.white)
+                                // Main button
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(hex: "1a1a1a"))
                             }
-
-                            // Text
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(feature.title)
-                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.white)
-
-                                Text(feature.description)
-                                    .font(.system(size: 13, design: .rounded))
-                                    .foregroundColor(.white.opacity(0.85))
-                            }
-
-                            Spacer()
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Color.white.opacity(0.15))
                         )
-                    }
                 }
-                .padding(.horizontal, 60)
-
-                Spacer()
-
-                // Navigation
-                HStack(spacing: 14) {
-                    Button(action: onBack) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.left")
-                            Text("Back")
-                        }
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 22)
-                                .fill(Color.white.opacity(0.2))
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(action: onNext) {
-                        HStack(spacing: 6) {
-                            Text("Continue")
-                            Image(systemName: "arrow.right")
-                        }
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 22)
-                                .fill(Color.white.opacity(0.25))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 22)
-                                        .stroke(Color.white.opacity(0.4), lineWidth: 1)
-                                )
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
+                .buttonStyle(FeaturesNoFadeButtonStyle())
 
                 Spacer()
                     .frame(height: 30)
             }
         }
+        .onAppear {
+            setupPlayer()
+        }
+    }
+
+    private func setupPlayer() {
+        if let videoURL = Bundle.main.url(forResource: "paso2", withExtension: "mp4") {
+            player = AVPlayer(url: videoURL)
+            player?.actionAtItemEnd = .none
+            player?.isMuted = true
+
+            // Show keys animation when video starts
+            showKeysAnimation()
+
+            // Loop video and show keys each time
+            NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: player?.currentItem,
+                queue: .main
+            ) { _ in
+                player?.seek(to: .zero)
+                player?.play()
+                showKeysAnimation()
+            }
+
+            player?.play()
+        }
+    }
+
+    private func showKeysAnimation() {
+        // Reset states
+        showKeys = true
+        keyStates = [false, false, false]
+
+        // Animate each key appearing with delay (like pressing keys)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            keyStates[0] = true // ⌘
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            keyStates[1] = true // ⇧
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            keyStates[2] = true // T
+        }
+
+        // Hide keys after 1.5 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            // Fade out all keys together
+            withAnimation(.easeOut(duration: 0.25)) {
+                keyStates = [false, false, false]
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                showKeys = false
+            }
+        }
+    }
+}
+
+// MARK: - Video Player without controls
+struct VideoPlayerView: NSViewRepresentable {
+    let player: AVPlayer
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.videoGravity = .resizeAspect
+        view.wantsLayer = true
+        view.layer = playerLayer
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if let playerLayer = nsView.layer as? AVPlayerLayer {
+            playerLayer.player = player
+        }
+    }
+}
+
+// MARK: - No Fade Button Style
+struct FeaturesNoFadeButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(1)
+    }
+}
+
+// MARK: - 3D Keyboard Key for Onboarding (white style with press effect)
+struct OnboardingKey: View {
+    let text: String
+    var isPressed: Bool = true
+
+    var body: some View {
+        ZStack {
+            // Bottom layer (3D effect) - darker when pressed
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(white: 0.4))
+                .frame(width: 44, height: 44)
+                .offset(y: isPressed ? 2 : 4)
+
+            // Top layer - moves down slightly when pressed
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white)
+                .frame(width: 44, height: 44)
+                .offset(y: isPressed ? 1 : 0)
+
+            Text(text)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.black)
+                .offset(y: isPressed ? 1 : 0)
+        }
+        .frame(width: 44, height: 48)
     }
 }
