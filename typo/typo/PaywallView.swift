@@ -12,196 +12,190 @@ struct PaywallView: View {
     @Binding var isPresented: Bool
     var onUpgrade: (() -> Void)?
 
-    // App accent blue color
-    private var appBlue: Color {
-        Color(red: 0.0, green: 0.584, blue: 1.0)
-    }
+    // Green accent color like the design
+    private let accentGreen = Color(hex: "00CE44")
+    private let darkGreen = Color(hex: "00B03A")
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header with close button
-            HStack {
-                Spacer()
-                Button(action: {
-                    isPresented = false
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(width: 28, height: 28)
-                        .background(Color.gray.opacity(0.1))
-                        .clipShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .pointerCursor()
+            // Header section
+            VStack(spacing: 4) {
+                Text("Yearly")
+                    .font(.nunitoBold(size: 24))
+                    .foregroundColor(.white)
+
+                Text("Unlock Full Potential")
+                    .font(.nunitoRegularBold(size: 13))
+                    .foregroundColor(.white.opacity(0.85))
             }
-            .padding(16)
-
-            // Content
-            VStack(spacing: 24) {
-                // Icon and title
-                VStack(spacing: 16) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [appBlue, appBlue.opacity(0.7)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 80, height: 80)
-
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 36))
-                            .foregroundColor(.white)
-                    }
-
-                    Text("Upgrade to Pro")
-                        .font(.nunitoBold(size: 28))
-                        .foregroundColor(.primary)
-
-                    Text("You've reached the free limit of 5 actions.\nUpgrade to create unlimited actions.")
-                        .font(.nunitoRegularBold(size: 15))
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(4)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 20)
+            .padding(.bottom, 16)
+            .overlay(
+                VStack(spacing: 0) {
+                    Rectangle()
+                        .fill(Color.black.opacity(0.10))
+                        .frame(height: 2)
+                    Rectangle()
+                        .fill(Color.white.opacity(0.10))
+                        .frame(height: 2)
                 }
+                .padding(.horizontal, 20),
+                alignment: .bottom
+            )
 
-                // Features
-                VStack(alignment: .leading, spacing: 14) {
-                    PaywallFeatureRow(
-                        icon: "infinity",
-                        title: "Unlimited Actions",
-                        description: "Create as many actions as you need"
-                    )
-
-                    PaywallFeatureRow(
-                        icon: "bolt.fill",
-                        title: "Priority Support",
-                        description: "Get help faster when you need it"
-                    )
-
-                    PaywallFeatureRow(
-                        icon: "arrow.triangle.2.circlepath",
-                        title: "Free Updates",
-                        description: "Access to all new features"
-                    )
-
-                    PaywallFeatureRow(
-                        icon: "heart.fill",
-                        title: "Support Development",
-                        description: "Help us build more amazing features"
-                    )
-                }
-                .padding(.horizontal, 20)
-
-                Spacer()
-
-                // Price and CTA
-                VStack(spacing: 16) {
-                    // Price
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("$14.99")
-                            .font(.nunitoBold(size: 36))
-                            .foregroundColor(.primary)
-
-                        Text("/ year")
-                            .font(.nunitoRegularBold(size: 16))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Text("That's just $1.25/month")
-                        .font(.nunitoRegularBold(size: 13))
-                        .foregroundColor(.secondary)
-
-                    // Upgrade button
-                    Button(action: {
-                        if authManager.isAuthenticated {
-                            authManager.openStripePayment()
-                            onUpgrade?()
-                        } else {
-                            // Need to sign in first
-                            isPresented = false
-                            // Notify to open account tab
-                            NotificationCenter.default.post(
-                                name: NSNotification.Name("OpenAccountTab"),
-                                object: nil
-                            )
-                        }
-                    }) {
-                        HStack(spacing: 8) {
-                            Text(authManager.isAuthenticated ? "Upgrade Now" : "Sign In to Upgrade")
-                                .font(.nunitoBold(size: 16))
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
+            // Price section
+            VStack(spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("$1.25")
+                        .font(.custom("Nunito-Black", size: 48))
                         .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(appBlue)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .pointerCursor()
 
-                    // Not now button
-                    Button(action: {
-                        isPresented = false
-                    }) {
-                        Text("Maybe Later")
-                            .font(.nunitoRegularBold(size: 14))
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .pointerCursor()
+                    Text("/ month")
+                        .font(.nunitoBold(size: 14))
+                        .foregroundColor(.white.opacity(0.8))
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
+
+                Text("Billed yearly at $14.99")
+                    .font(.nunitoRegularBold(size: 12))
+                    .foregroundColor(.white.opacity(0.75))
+            }
+            .padding(.vertical, 16)
+            .overlay(
+                VStack(spacing: 0) {
+                    Rectangle()
+                        .fill(Color.black.opacity(0.10))
+                        .frame(height: 2)
+                    Rectangle()
+                        .fill(Color.white.opacity(0.10))
+                        .frame(height: 2)
+                }
+                .padding(.horizontal, 20),
+                alignment: .bottom
+            )
+
+            // Features list
+            VStack(alignment: .leading, spacing: 10) {
+                PaywallCheckItem(text: "Unlimited actions")
+                PaywallCheckItem(text: "All TexTab features")
+                PaywallCheckItem(text: "Priority support")
+                PaywallCheckItem(text: "Free updates")
             }
             .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 16)
+
+            // CTA Button - white with 3D effect
+            Button(action: {
+                if authManager.isAuthenticated {
+                    authManager.openStripePayment()
+                    onUpgrade?()
+                } else {
+                    isPresented = false
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("OpenAccountTab"),
+                        object: nil
+                    )
+                }
+            }) {
+                Text(authManager.isAuthenticated ? "Get started" : "Sign in to upgrade")
+                    .font(.nunitoBold(size: 14))
+                    .foregroundColor(Color(hex: "262626"))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        ZStack {
+                            // Shadow/3D layer
+                            RoundedRectangle(cornerRadius: 50)
+                                .fill(Color(hex: "E3E3E3"))
+                                .offset(y: 4)
+
+                            // Main button
+                            RoundedRectangle(cornerRadius: 50)
+                                .fill(Color.white)
+                        }
+                    )
+            }
+            .buttonStyle(.plain)
+            .pointerCursor()
+            .padding(.horizontal, 20)
+
+            // Close button
+            Button(action: {
+                isPresented = false
+            }) {
+                Text("Maybe later")
+                    .font(.nunitoRegularBold(size: 11))
+                    .foregroundColor(.white.opacity(0.6))
+            }
+            .buttonStyle(.plain)
+            .pointerCursor()
+            .padding(.top, 10)
+            .padding(.bottom, 16)
         }
-        .frame(width: 400, height: 580)
-        .background(Color(NSColor.windowBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+        .frame(width: 280)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(accentGreen)
+        )
+        .overlay(
+            // Save badge - positioned at top, sticking out with inner gradient highlight
+            HStack(spacing: 6) {
+                Text("Save 33%")
+                    .font(.nunitoBold(size: 11))
+                    .foregroundColor(.white)
+
+                Text("🔥")
+                    .font(.system(size: 10))
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(
+                ZStack {
+                    // Main badge background
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(hex: "262626"))
+
+                    // Top inner highlight/gradient for 3D effect
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.25),
+                                    Color.white.opacity(0.0)
+                                ],
+                                startPoint: .top,
+                                endPoint: .center
+                            )
+                        )
+                }
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color(hex: "222222"), lineWidth: 2)
+            )
+            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+            .offset(y: -12),
+            alignment: .top
+        )
+        .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 10)
     }
 }
 
-// MARK: - Feature Row
+// MARK: - Check Item
 
-struct PaywallFeatureRow: View {
-    let icon: String
-    let title: String
-    let description: String
-
-    private var appBlue: Color {
-        Color(red: 0.0, green: 0.584, blue: 1.0)
-    }
+struct PaywallCheckItem: View {
+    let text: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(appBlue.opacity(0.1))
-                    .frame(width: 36, height: 36)
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 16))
+                .foregroundColor(.white)
 
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundColor(appBlue)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.nunitoBold(size: 15))
-                    .foregroundColor(.primary)
-
-                Text(description)
-                    .font(.nunitoRegularBold(size: 13))
-                    .foregroundColor(.secondary)
-            }
+            Text(text)
+                .font(.nunitoBold(size: 13))
+                .foregroundColor(.white)
 
             Spacer()
         }
