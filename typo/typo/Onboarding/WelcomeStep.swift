@@ -16,7 +16,8 @@ struct WelcomeStep: View {
     @State private var buttonOffset: CGFloat = 50
     @State private var wavePhase: CGFloat = 0
 
-    private let brandBlue = Color(hex: "2196F3")
+    // Pastel peach/coral color matching step 4
+    private let brandPastel = Color(hex: "F5D0C5")
 
     var body: some View {
         GeometryReader { geo in
@@ -25,15 +26,15 @@ struct WelcomeStep: View {
                 Color.white
                     .ignoresSafeArea()
 
-                // Single wave layer with gradient
+                // Single wave layer with gradient - pink tones
                 WelcomeWaveShape(phase: wavePhase, frequency: 2, amplitude: 20)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(hex: "0D47A1"),
-                                Color(hex: "1976D2"),
-                                Color(hex: "42A5F5"),
-                                Color(hex: "4DD0E1")
+                                Color(hex: "E8909C"),
+                                Color(hex: "F4A5B0"),
+                                Color(hex: "FBBAC4"),
+                                Color(hex: "FDD5DB")
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -46,14 +47,14 @@ struct WelcomeStep: View {
                 // Content - truly centered
                 VStack(spacing: 50) {
                     // Main title - Nunito Black
-                    VStack(spacing: -8) {
-                        Text("Do it 10x")
-                            .font(.custom("Nunito-Black", size: 56))
+                    VStack(spacing: -6) {
+                        Text("Turn any AI task")
+                            .font(.custom("Nunito-Black", size: 48))
                             .foregroundColor(.white)
                             .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 4)
 
-                        Text("faster")
-                            .font(.custom("Nunito-Black", size: 56))
+                        Text("into a keyboard shortcut")
+                            .font(.custom("Nunito-Black", size: 48))
                             .foregroundColor(.white)
                             .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 4)
                     }
@@ -61,7 +62,7 @@ struct WelcomeStep: View {
                     .opacity(textOpacity)
                     .scaleEffect(textScale)
 
-                    // Get Started button
+                    // Get Started button - Black style
                     Button(action: onNext) {
                         Text("Get Started")
                             .font(.custom("Nunito-Bold", size: 17))
@@ -71,17 +72,13 @@ struct WelcomeStep: View {
                                 ZStack {
                                     // Bottom shadow layer (3D effect)
                                     RoundedRectangle(cornerRadius: 16)
-                                        .fill(Color(hex: "1565C0"))
+                                        .fill(Color(hex: "333333"))
                                         .offset(y: 5)
 
                                     // Main button
                                     RoundedRectangle(cornerRadius: 16)
-                                        .fill(brandBlue)
+                                        .fill(Color(hex: "1a1a1a"))
                                 }
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 4)
                             )
                     }
                     .buttonStyle(.plain)
