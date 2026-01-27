@@ -20,14 +20,15 @@ struct LoginRequiredView: View {
     private let brandPastel = Color(hex: "F5D0C5")
 
     var body: some View {
-        HStack(spacing: 0) {
-            // Left side - White form
-            ZStack(alignment: .trailing) {
-                Color.white
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                // Left side - White form
+                ZStack(alignment: .trailing) {
+                    Color.white
 
-                VStack(alignment: .leading, spacing: 0) {
-                    Spacer()
-                        .frame(height: 40)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Spacer()
+                            .frame(height: 60)
 
                     Text(isSignUp ? "Create Account" : "Sign In")
                         .font(.nunitoBold(size: 32))
@@ -229,9 +230,9 @@ struct LoginRequiredView: View {
                     .frame(width: 22)
                     .offset(x: 10)
             }
-            .frame(width: 340)
+            .frame(width: 340, height: geometry.size.height)
 
-            // Right side - Pastel with app icon
+            // Right side - Pastel with app icon (fixed height)
             ZStack {
                 brandPastel
 
@@ -242,8 +243,11 @@ struct LoginRequiredView: View {
                     .frame(width: 220, height: 220)
                     .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
             }
-            .frame(maxWidth: .infinity)
+            .frame(width: geometry.size.width - 340, height: geometry.size.height)
         }
+        .frame(width: geometry.size.width, height: geometry.size.height)
+        }
+        .ignoresSafeArea()
         .sheet(isPresented: $showForgotPassword) {
             forgotPasswordSheet
         }
@@ -315,7 +319,7 @@ struct LoginRequiredView: View {
     }
 }
 
-// MARK: - Login Wavy Edge Pastel
+// MARK: - Login Wavy Edge Pastel (Vertical - Left side)
 
 struct LoginWavyEdgePastel: View {
     var body: some View {
