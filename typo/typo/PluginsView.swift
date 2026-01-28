@@ -349,6 +349,8 @@ struct PluginDetailView: View {
 
     var pluginInputDescription: String {
         switch plugin {
+        case .chat:
+            return "Text conversation"
         case .qrGenerator:
             return "Text or URL"
         case .imageConverter:
@@ -430,6 +432,8 @@ struct PluginInfoView: View {
     @ViewBuilder
     var pluginSpecificInfo: some View {
         switch pluginType {
+        case .chat:
+            infoRow(icon: "bubble.left.and.bubble.right.fill", title: "Chat", description: "Have a conversation with AI directly from the popup")
         case .qrGenerator:
             infoRow(icon: "qrcode", title: "Input", description: "Any text or URL to encode")
         case .imageConverter:

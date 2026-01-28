@@ -150,6 +150,9 @@ struct PopoverView: View {
             } else {
                 activeAction = nil
                 isProcessing = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isQuickPromptFocused = true
+                }
             }
         }
     }
@@ -225,19 +228,21 @@ struct PopoverView: View {
 
     var mainView: some View {
         VStack(spacing: 0) {
-            // Chat button
-            ChatButtonView(onTap: {
-                showChat = true
-            })
-            .padding(.horizontal, 10)
-            .padding(.top, 10)
-            .padding(.bottom, 6)
+            // Chat button (only if chat plugin is installed)
+            if store.isPluginInstalled(.chat) {
+                ChatButtonView(onTap: {
+                    showChat = true
+                })
+                .padding(.horizontal, 10)
+                .padding(.top, 10)
+                .padding(.bottom, 6)
+            }
 
             // Quick prompt input
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(appBlue)
 
                 TextField("Tell AI what to do...", text: $quickPromptText)
                     .textFieldStyle(.plain)
@@ -248,6 +253,7 @@ struct PopoverView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .padding(.horizontal, 10)
+            .padding(.top, store.isPluginInstalled(.chat) ? 0 : 10)
 
             // Selected text preview (full width)
             if !textManager.capturedText.isEmpty {

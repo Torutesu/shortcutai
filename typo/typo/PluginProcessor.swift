@@ -56,6 +56,8 @@ class PluginProcessor {
 
     func process(pluginType: PluginType, input: String) -> PluginResult {
         switch pluginType {
+        case .chat:
+            return .error("Chat is handled by ChatView")
         case .qrGenerator:
             return generateQRCode(from: input)
         case .imageConverter:

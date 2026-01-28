@@ -18,12 +18,14 @@ enum ActionType: String, Codable, CaseIterable {
 // MARK: - Plugin Type
 
 enum PluginType: String, Codable, CaseIterable {
+    case chat = "chat"
     case qrGenerator = "qrGenerator"
     case imageConverter = "imageConverter"
     case colorPicker = "colorPicker"
 
     var displayName: String {
         switch self {
+        case .chat: return "Chat with AI"
         case .qrGenerator: return "QR Code Generator"
         case .imageConverter: return "Image Converter"
         case .colorPicker: return "Color Picker"
@@ -32,6 +34,7 @@ enum PluginType: String, Codable, CaseIterable {
 
     var description: String {
         switch self {
+        case .chat: return "Have a conversation with AI directly from the popup"
         case .qrGenerator: return "Generate QR codes from text or URLs"
         case .imageConverter: return "Convert images between PNG, JPEG, WEBP, TIFF"
         case .colorPicker: return "Pick any color from your screen with an eyedropper"
@@ -40,6 +43,7 @@ enum PluginType: String, Codable, CaseIterable {
 
     var icon: String {
         switch self {
+        case .chat: return "bubble.left.and.bubble.right.fill"
         case .qrGenerator: return "qrcode"
         case .imageConverter: return "photo.on.rectangle.angled"
         case .colorPicker: return "eyedropper"
@@ -48,6 +52,7 @@ enum PluginType: String, Codable, CaseIterable {
 
     var category: PluginCategory {
         switch self {
+        case .chat: return .ai
         case .qrGenerator: return .generators
         case .imageConverter: return .converters
         case .colorPicker: return .utilities
@@ -58,7 +63,7 @@ enum PluginType: String, Codable, CaseIterable {
     var outputsImage: Bool {
         switch self {
         case .qrGenerator, .imageConverter: return true
-        case .colorPicker: return false
+        case .chat, .colorPicker: return false
         }
     }
 
@@ -74,7 +79,7 @@ enum PluginType: String, Codable, CaseIterable {
     var requiresTextInput: Bool {
         switch self {
         case .qrGenerator: return true
-        case .imageConverter, .colorPicker: return false
+        case .chat, .imageConverter, .colorPicker: return false
         }
     }
 
@@ -85,9 +90,18 @@ enum PluginType: String, Codable, CaseIterable {
         default: return false
         }
     }
+
+    // Whether this plugin is a UI-only plugin (no Action created)
+    var isUIPlugin: Bool {
+        switch self {
+        case .chat: return true
+        default: return false
+        }
+    }
 }
 
 enum PluginCategory: String, CaseIterable {
+    case ai = "AI"
     case generators = "Generators"
     case converters = "Converters"
     case utilities = "Utilities"
@@ -378,6 +392,9 @@ class ActionsStore: ObservableObject {
         installedPlugins.insert(pluginType)
         saveInstalledPlugins()
 
+        // UI-only plugins (like chat) don't create actions
+        guard !pluginType.isUIPlugin else { return }
+
         // Add as action
         let action = Action(
             name: pluginType.displayName,
@@ -393,6 +410,9 @@ class ActionsStore: ObservableObject {
     func uninstallPlugin(_ pluginType: PluginType) {
         installedPlugins.remove(pluginType)
         saveInstalledPlugins()
+
+        // UI-only plugins don't have actions to remove
+        guard !pluginType.isUIPlugin else { return }
 
         // Remove associated actions
         actions.removeAll { $0.pluginType == pluginType }
