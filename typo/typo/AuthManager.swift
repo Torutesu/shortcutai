@@ -110,9 +110,20 @@ class AuthManager: ObservableObject {
     private let userCreatedAtKey = "typo_user_created_at"
     private let subscriptionStatusKey = "typo_subscription_status"
     private let subscriptionEndKey = "typo_subscription_end"
+    private var subscriptionTimer: Timer?
 
     private init() {
         loadSession()
+        startSubscriptionPolling()
+    }
+
+    private func startSubscriptionPolling() {
+        subscriptionTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            guard let self = self, self.isAuthenticated else { return }
+            Task {
+                await self.refreshSubscription()
+            }
+        }
     }
 
     // MARK: - Sign Up

@@ -234,6 +234,9 @@ struct PaywallModifier: ViewModifier {
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentSuccess"))) { _ in
+            isPresented = false
+        }
     }
 }
 

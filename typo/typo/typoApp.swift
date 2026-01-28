@@ -683,7 +683,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func openSettings() {
-        // Crear nueva ventana siempre para evitar problemas de memoria
+        // Reuse existing window if it's still open
+        if let existing = settingsWindow, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 700, height: 620),
             styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
