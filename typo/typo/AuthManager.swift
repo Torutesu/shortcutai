@@ -83,8 +83,8 @@ class AuthManager: ObservableObject {
     private let supabaseURL = "https://ywbrvymvyndeixorggkx.supabase.co"
     private let supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3YnJ2eW12eW5kZWl4b3JnZ2t4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NzUzNzIsImV4cCI6MjA4NTA1MTM3Mn0.kbQ9_WsHHdhVXqqk-smwNb2K7gQkz7b1i8l2YwgOGRY"
 
-    // Stripe Payment Link (Test Mode)
-    let stripePaymentLink = "https://buy.stripe.com/test_dRm28qeFFc9P06x2ceejK00"
+    // Edge Function for dynamic checkout
+    private let createCheckoutURL: String = "https://ywbrvymvyndeixorggkx.supabase.co/functions/v1/create-checkout"
 
     // OAuth redirect URI - GitHub Pages callback page
     private let redirectURI = "https://elprofug0.github.io/textab-auth/auth/callback.html"
@@ -308,15 +308,36 @@ class AuthManager: ObservableObject {
     // MARK: - Open Stripe Payment
 
     func openStripePayment() {
-        // Build URL with prefilled email if user is logged in
-        var urlString = stripePaymentLink
-        if let email = currentUser?.email {
-            let encodedEmail = email.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? email
-            urlString += "?prefilled_email=\(encodedEmail)"
-        }
+        guard let email = currentUser?.email else { return }
 
-        if let url = URL(string: urlString) {
-            NSWorkspace.shared.open(url)
+        Task {
+            do {
+                guard let url = URL(string: createCheckoutURL) else { return }
+
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+                let body = ["email": email]
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+                let (data, response) = try await URLSession.shared.data(for: request)
+
+                guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                    print("Checkout error: bad response")
+                    return
+                }
+
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let checkoutURLString = json["url"] as? String,
+                   let checkoutURL = URL(string: checkoutURLString) {
+                    _ = await MainActor.run {
+                        NSWorkspace.shared.open(checkoutURL)
+                    }
+                }
+            } catch {
+                print("Checkout error: \(error)")
+            }
         }
     }
 
