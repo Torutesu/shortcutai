@@ -24,14 +24,14 @@ struct QuickPromptView: View {
         }
     }
 
-    private var appBlue: Color {
-        Color(red: 0.0, green: 0.584, blue: 1.0)
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            HStack {
+            HStack(spacing: 8) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.orange)
+
                 Text("Quick Prompt")
                     .font(.nunitoRegularBold(size: 14))
                     .foregroundColor(.primary)
@@ -40,8 +40,13 @@ struct QuickPromptView: View {
 
                 Button(action: { onClose() }) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.secondary.opacity(0.6))
+                        .frame(width: 22, height: 22)
+                        .background(
+                            Circle()
+                                .fill(Color.gray.opacity(0.12))
+                        )
                 }
                 .buttonStyle(.plain)
                 .pointerCursor()
@@ -49,42 +54,47 @@ struct QuickPromptView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
 
+            // Selected text preview (max 2 lines)
+            if !textManager.capturedText.isEmpty {
+                HStack(spacing: 0) {
+                    Text(textManager.capturedText)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    colorScheme == .light
+                        ? Color(red: 245/255, green: 245/255, blue: 243/255)
+                        : Color(white: 1).opacity(0.05)
+                )
+            }
+
             Divider()
 
-            // Custom prompt input
+            // Prompt input
             HStack(spacing: 10) {
-                Image(systemName: "bolt.fill")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.orange)
-                    .frame(width: 18)
-
                 TextField("Write your prompt...", text: $promptText)
                     .textFieldStyle(.plain)
-                    .font(.nunitoRegularBold(size: 14))
+                    .font(.nunitoRegularBold(size: 16))
                     .foregroundColor(.primary)
                     .focused($isPromptFocused)
 
                 if !promptText.isEmpty {
-                    Image(systemName: "return")
-                        .foregroundColor(.gray)
-                        .font(.system(size: 12))
+                    Button(action: { executeQuickPrompt() }) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.orange)
+                    }
+                    .buttonStyle(.plain)
+                    .pointerCursor()
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-
-            Divider()
-
-            // Selected text preview
-            ScrollView {
-                Text(textManager.capturedText)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(14)
-            }
-            .frame(maxHeight: 200)
-            .background(Color(NSColor.controlBackgroundColor))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
 
             // Footer
             HStack {
@@ -103,10 +113,14 @@ struct QuickPromptView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(Color(NSColor.controlBackgroundColor))
+            .padding(.vertical, 8)
+            .background(
+                colorScheme == .light
+                    ? Color(red: 245/255, green: 245/255, blue: 243/255)
+                    : Color(white: 1).opacity(0.05)
+            )
         }
-        .frame(width: 320)
+        .frame(width: 420)
         .background(Color(NSColor.windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(

@@ -513,6 +513,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Guardar el contenido actual del clipboard
         let pasteboard = NSPasteboard.general
         let oldContents = pasteboard.string(forType: .string)
+        let oldChangeCount = pasteboard.changeCount
 
         // Simular Cmd+C para copiar el texto seleccionado
         let source = CGEventSource(stateID: .combinedSessionState)
@@ -532,12 +533,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Esperar un poco para que el sistema procese la copia
         usleep(100000) // 100ms
 
-        // Guardar el texto capturado
-        CapturedTextManager.shared.capturedText = pasteboard.string(forType: .string) ?? ""
-
-        // Si no se copió nada nuevo, mantener lo que había (podría ser que no había selección)
-        if CapturedTextManager.shared.capturedText.isEmpty {
-            CapturedTextManager.shared.capturedText = oldContents ?? ""
+        // Si el changeCount no cambió, no se copió nada nuevo (no había selección)
+        if pasteboard.changeCount == oldChangeCount {
+            CapturedTextManager.shared.capturedText = ""
+        } else {
+            CapturedTextManager.shared.capturedText = pasteboard.string(forType: .string) ?? ""
         }
     }
 
@@ -547,7 +547,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         })
 
         let panel = KeyablePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 320, height: 380),
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 300),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -564,9 +564,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Center on screen
         if let screen = NSScreen.main {
             let screenRect = screen.visibleFrame
-            let x = (screenRect.width - 320) / 2 + screenRect.minX
-            let y = (screenRect.height - 380) / 2 + screenRect.minY
-            panel.setFrame(NSRect(x: x, y: y, width: 320, height: 380), display: true)
+            let x = (screenRect.width - 420) / 2 + screenRect.minX
+            let y = (screenRect.height - 300) / 2 + screenRect.minY
+            panel.setFrame(NSRect(x: x, y: y, width: 420, height: 300), display: true)
         }
 
         quickPromptWindow = panel
