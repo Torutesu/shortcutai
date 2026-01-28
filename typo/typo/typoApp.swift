@@ -501,7 +501,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let screen = NSScreen.main {
             let screenRect = screen.visibleFrame
             let windowWidth: CGFloat = 320
-            let windowHeight: CGFloat = 460
+            let windowHeight: CGFloat = 500
             let x = (screenRect.width - windowWidth) / 2 + screenRect.minX
             let y = (screenRect.height - windowHeight) / 2 + screenRect.minY
 
@@ -658,7 +658,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Tamaño más grande para acciones directas
         let width: CGFloat = action != nil ? 560 : 320
-        let height: CGFloat = action != nil ? 600 : 460
+        let height: CGFloat = action != nil ? 600 : 500
 
         let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: width, height: height),

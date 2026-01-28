@@ -349,7 +349,7 @@ struct PopoverView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .frame(height: 340)
+            .frame(maxHeight: .infinity)
 
             Divider()
 
@@ -385,6 +385,7 @@ struct PopoverView: View {
             .padding(.vertical, 10)
             .background(Color(NSColor.controlBackgroundColor))
         }
+        .frame(height: 480)
         .onKeyPress(.upArrow) {
             guard !isQuickPromptFocused else { return .ignored }
             shouldScrollToSelection = true
