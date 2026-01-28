@@ -62,6 +62,7 @@ struct PopoverView: View {
     // Quick prompt state
     @State private var quickPromptText: String = ""
     @FocusState private var isQuickPromptFocused: Bool
+    @State private var showPaywall = false
 
     // Theme preference (using AppStorage for automatic updates)
     @AppStorage("appTheme") private var appTheme: String = "System"
@@ -135,6 +136,7 @@ struct PopoverView: View {
             }
         }
         .preferredColorScheme(savedColorScheme)
+        .paywall(isPresented: $showPaywall)
         .onAppear {
             // Reset all states when popup appears
             clipboardImage = nil
@@ -430,6 +432,11 @@ struct PopoverView: View {
     func executeQuickPrompt() {
         let prompt = quickPromptText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty else { return }
+
+        guard authManager.isPro else {
+            showPaywall = true
+            return
+        }
 
         let quickAction = Action(
             name: "Quick Prompt",
