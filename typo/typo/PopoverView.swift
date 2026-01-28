@@ -266,44 +266,9 @@ struct PopoverView: View {
                     )
             }
 
-            // Quick prompt preview (shown while typing)
-            if !quickPromptText.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "return")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundColor(.secondary.opacity(0.5))
-                        .frame(width: 44, height: 44)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(colorScheme == .light
-                                    ? Color(red: 235/255, green: 235/255, blue: 233/255)
-                                    : Color(white: 1).opacity(0.08))
-                        )
-
-                    Text("Custom Prompt")
-                        .font(.nunitoRegularBold(size: 15))
-                        .foregroundColor(.primary)
-
-                    Text(quickPromptText)
-                        .font(.nunitoRegularBold(size: 13))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(appBlue)
-                        )
-
-                    Text("Press Enter to use as a custom prompt")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-            }
-
-            // Actions list (hidden when typing quick prompt)
-            if quickPromptText.isEmpty {
+            // Content area (fixed height)
+            ZStack {
+                // Actions list
                 ScrollViewReader { proxy in
                     ScrollView(showsIndicators: false) {
                         LazyVStack(spacing: 2) {
@@ -344,7 +309,6 @@ struct PopoverView: View {
                         }
                         .padding(8)
                     }
-                    .frame(maxHeight: 340)
                     .onChange(of: selectedIndex) { _, newValue in
                         if shouldScrollToSelection {
                             withAnimation(.easeOut(duration: 0.1)) {
@@ -354,7 +318,44 @@ struct PopoverView: View {
                         }
                     }
                 }
+                .opacity(quickPromptText.isEmpty ? 1 : 0)
+
+                // Quick prompt preview (shown while typing)
+                if !quickPromptText.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "return")
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundColor(.secondary.opacity(0.5))
+                            .frame(width: 44, height: 44)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(colorScheme == .light
+                                        ? Color(red: 235/255, green: 235/255, blue: 233/255)
+                                        : Color(white: 1).opacity(0.08))
+                            )
+
+                        Text("Quick Action")
+                            .font(.nunitoRegularBold(size: 15))
+                            .foregroundColor(.primary)
+
+                        Text(quickPromptText)
+                            .font(.nunitoRegularBold(size: 13))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(appBlue)
+                            )
+
+                        Text("Press Enter to run")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
+            .frame(height: 340)
 
             Divider()
 
