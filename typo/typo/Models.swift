@@ -230,8 +230,8 @@ class ActionsStore: ObservableObject {
         return AIModel.defaultModel(for: selectedProvider)
     }
 
-    // Free tier limit: 5 actions max
-    static let freeActionLimit = 5
+    // Free tier limit: 6 actions max
+    static let freeActionLimit = 6
 
     // Check if user can create a new action
     var canCreateAction: Bool {

@@ -143,7 +143,7 @@ struct PaywallView: View {
             ZStack {
                 // Badge base
                 HStack(spacing: 4) {
-                    Text("Save 33%")
+                    Text("3 days free")
                         .font(.nunitoBold(size: 11))
                         .foregroundColor(.white)
 
