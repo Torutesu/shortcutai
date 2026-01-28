@@ -41,6 +41,7 @@ class KeyablePanel: NSPanel {
 class CapturedTextManager: ObservableObject {
     static let shared = CapturedTextManager()
     @Published var capturedText: String = ""
+    @Published var hasSelection: Bool = false
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -536,11 +537,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Esperar un poco para que el sistema procese la copia
         usleep(100000) // 100ms
 
-        // Si el changeCount no cambió, no se copió nada nuevo (no había selección)
-        if pasteboard.changeCount == oldChangeCount {
-            CapturedTextManager.shared.capturedText = ""
-        } else {
-            CapturedTextManager.shared.capturedText = pasteboard.string(forType: .string) ?? ""
+        // Detectar si realmente hubo una selección
+        // changeCount cambia = Cmd+C copió algo = hay texto seleccionado
+        // changeCount igual = Cmd+C no copió nada = no hay selección
+        let newContents = pasteboard.string(forType: .string) ?? ""
+        let clipboardChanged = pasteboard.changeCount != oldChangeCount
+        let hasRealContent = !newContents.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        CapturedTextManager.shared.hasSelection = clipboardChanged && hasRealContent
+
+        // Guardar el texto capturado (usar clipboard existente como fallback para actions)
+        CapturedTextManager.shared.capturedText = newContents
+        if CapturedTextManager.shared.capturedText.isEmpty {
+            CapturedTextManager.shared.capturedText = oldContents ?? ""
         }
     }
 

@@ -257,8 +257,8 @@ struct PopoverView: View {
             .padding(.horizontal, 10)
             .padding(.top, store.isPluginInstalled(.chat) ? 0 : 10)
 
-            // Selected text preview (full width)
-            if !textManager.capturedText.isEmpty {
+            // Selected text preview (full width, only when text is actually selected and not empty)
+            if textManager.hasSelection && !textManager.capturedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text(textManager.capturedText)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(.secondary)
