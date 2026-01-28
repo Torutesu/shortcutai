@@ -46,6 +46,7 @@ class CapturedTextManager: ObservableObject {
 class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var popoverWindow: NSWindow?
+    var quickPromptWindow: NSWindow?
     var settingsWindow: NSWindow?
     var onboardingWindow: NSWindow?
     var eventMonitor: Any?
@@ -538,6 +539,39 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if CapturedTextManager.shared.capturedText.isEmpty {
             CapturedTextManager.shared.capturedText = oldContents ?? ""
         }
+    }
+
+    func showQuickPrompt() {
+        let quickPromptView = QuickPromptView(onClose: { [weak self] in
+            self?.quickPromptWindow?.orderOut(nil)
+        })
+
+        let panel = KeyablePanel(
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 380),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.level = .floating
+        panel.contentView = NSHostingView(rootView: quickPromptView)
+        panel.hasShadow = false
+        panel.isFloatingPanel = true
+        panel.becomesKeyOnlyIfNeeded = false
+
+        // Center on screen
+        if let screen = NSScreen.main {
+            let screenRect = screen.visibleFrame
+            let x = (screenRect.width - 320) / 2 + screenRect.minX
+            let y = (screenRect.height - 380) / 2 + screenRect.minY
+            panel.setFrame(NSRect(x: x, y: y, width: 320, height: 380), display: true)
+        }
+
+        quickPromptWindow = panel
+        panel.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func hidePopover() {

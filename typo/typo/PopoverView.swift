@@ -220,10 +220,21 @@ struct PopoverView: View {
 
     var mainView: some View {
         VStack(spacing: 0) {
-            // Chat button
-            ChatButtonView(onTap: {
-                showChat = true
-            })
+            // Chat & Quick Prompt buttons
+            VStack(spacing: 6) {
+                ChatButtonView(onTap: {
+                    showChat = true
+                })
+
+                if !textManager.capturedText.isEmpty {
+                    QuickPromptButtonView(onTap: {
+                        onClose()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            globalAppDelegate?.showQuickPrompt()
+                        }
+                    })
+                }
+            }
             .padding(.horizontal, 10)
             .padding(.vertical, 10)
 
@@ -1279,6 +1290,48 @@ struct ChatButtonView: View {
 
                 Image(systemName: "arrow.right.circle.fill")
                     .foregroundColor(appBlue)
+                    .font(.system(size: 16))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(backgroundColor)
+            )
+        }
+        .buttonStyle(.plain)
+        .pointerCursor()
+    }
+}
+
+// MARK: - Quick Prompt Button
+
+struct QuickPromptButtonView: View {
+    @Environment(\.colorScheme) var colorScheme
+    var onTap: () -> Void
+
+    var backgroundColor: Color {
+        colorScheme == .light
+            ? Color(red: 241/255, green: 241/255, blue: 239/255)
+            : Color(white: 1).opacity(0.1)
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 10) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.gray)
+                    .frame(width: 18)
+
+                Text("Quick Prompt")
+                    .font(.nunitoRegularBold(size: 14))
+                    .foregroundColor(.gray)
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .foregroundColor(.orange)
                     .font(.system(size: 16))
             }
             .padding(.horizontal, 12)
