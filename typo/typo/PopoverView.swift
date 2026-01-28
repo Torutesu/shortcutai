@@ -59,8 +59,13 @@ struct PopoverView: View {
     // Chat state
     @State private var showChat = false
 
+    // Quick prompt state
+    @State private var quickPromptText: String = ""
+    @FocusState private var isQuickPromptFocused: Bool
+
     // Theme preference (using AppStorage for automatic updates)
     @AppStorage("appTheme") private var appTheme: String = "System"
+    @Environment(\.colorScheme) var colorScheme
 
     var onClose: () -> Void
     var onOpenSettings: () -> Void
@@ -220,72 +225,133 @@ struct PopoverView: View {
 
     var mainView: some View {
         VStack(spacing: 0) {
-            // Chat & Quick Prompt buttons
-            VStack(spacing: 6) {
-                ChatButtonView(onTap: {
-                    showChat = true
-                })
-
-                if !textManager.capturedText.isEmpty {
-                    QuickPromptButtonView(onTap: {
-                        onClose()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            globalAppDelegate?.showQuickPrompt()
-                        }
-                    })
-                }
-            }
+            // Chat button
+            ChatButtonView(onTap: {
+                showChat = true
+            })
             .padding(.horizontal, 10)
+            .padding(.top, 10)
+            .padding(.bottom, 6)
+
+            // Quick prompt input
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+
+                TextField("Custom prompt...", text: $quickPromptText)
+                    .textFieldStyle(.plain)
+                    .font(.nunitoRegularBold(size: 14))
+                    .foregroundColor(.primary)
+                    .focused($isQuickPromptFocused)
+            }
+            .padding(.horizontal, 14)
             .padding(.vertical, 10)
+            .padding(.horizontal, 10)
 
-            // Actions list
-            ScrollViewReader { proxy in
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(spacing: 2) {
-                        ForEach(Array(store.actions.enumerated()), id: \.element.id) { index, action in
-                            ActionRow(
-                                action: action,
-                                isSelected: index == selectedIndex
-                            )
-                            .id(index)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                executeAction(action)
-                            }
-                            .onHover { hovering in
-                                if hovering {
-                                    selectedIndex = index
-                                    NSCursor.pointingHand.push()
-                                } else {
-                                    NSCursor.pop()
-                                }
-                            }
-                        }
+            // Selected text preview (full width)
+            if !textManager.capturedText.isEmpty {
+                Text(textManager.capturedText)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        colorScheme == .light
+                            ? Color(red: 241/255, green: 241/255, blue: 239/255)
+                            : Color(white: 1).opacity(0.05)
+                    )
+            }
 
-                        // New Action button
-                        NewActionRow(isSelected: store.actions.count == selectedIndex)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                onOpenSettings()
-                            }
-                            .onHover { hovering in
-                                if hovering {
-                                    selectedIndex = store.actions.count
-                                    NSCursor.pointingHand.push()
-                                } else {
-                                    NSCursor.pop()
-                                }
-                            }
-                    }
-                    .padding(8)
+            // Quick prompt preview (shown while typing)
+            if !quickPromptText.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "return")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundColor(.secondary.opacity(0.5))
+                        .frame(width: 44, height: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(colorScheme == .light
+                                    ? Color(red: 235/255, green: 235/255, blue: 233/255)
+                                    : Color(white: 1).opacity(0.08))
+                        )
+
+                    Text("Custom Prompt")
+                        .font(.nunitoRegularBold(size: 15))
+                        .foregroundColor(.primary)
+
+                    Text(quickPromptText)
+                        .font(.nunitoRegularBold(size: 13))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(appBlue)
+                        )
+
+                    Text("Press Enter to use as a custom prompt")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
                 }
-                .frame(maxHeight: 340)
-                .onChange(of: selectedIndex) { _, newValue in
-                    if shouldScrollToSelection {
-                        withAnimation(.easeOut(duration: 0.1)) {
-                            proxy.scrollTo(newValue, anchor: .center)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            }
+
+            // Actions list (hidden when typing quick prompt)
+            if quickPromptText.isEmpty {
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        LazyVStack(spacing: 2) {
+                            ForEach(Array(store.actions.enumerated()), id: \.element.id) { index, action in
+                                ActionRow(
+                                    action: action,
+                                    isSelected: index == selectedIndex
+                                )
+                                .id(index)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    executeAction(action)
+                                }
+                                .onHover { hovering in
+                                    if hovering {
+                                        selectedIndex = index
+                                        NSCursor.pointingHand.push()
+                                    } else {
+                                        NSCursor.pop()
+                                    }
+                                }
+                            }
+
+                            // New Action button
+                            NewActionRow(isSelected: store.actions.count == selectedIndex)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    onOpenSettings()
+                                }
+                                .onHover { hovering in
+                                    if hovering {
+                                        selectedIndex = store.actions.count
+                                        NSCursor.pointingHand.push()
+                                    } else {
+                                        NSCursor.pop()
+                                    }
+                                }
                         }
-                        shouldScrollToSelection = false
+                        .padding(8)
+                    }
+                    .frame(maxHeight: 340)
+                    .onChange(of: selectedIndex) { _, newValue in
+                        if shouldScrollToSelection {
+                            withAnimation(.easeOut(duration: 0.1)) {
+                                proxy.scrollTo(newValue, anchor: .center)
+                            }
+                            shouldScrollToSelection = false
+                        }
                     }
                 }
             }
@@ -325,22 +391,53 @@ struct PopoverView: View {
             .background(Color(NSColor.controlBackgroundColor))
         }
         .onKeyPress(.upArrow) {
+            guard !isQuickPromptFocused else { return .ignored }
             shouldScrollToSelection = true
             selectedIndex = max(0, selectedIndex - 1)
             return .handled
         }
         .onKeyPress(.downArrow) {
+            guard !isQuickPromptFocused else { return .ignored }
             shouldScrollToSelection = true
             selectedIndex = min(store.actions.count, selectedIndex + 1)
             return .handled
         }
         .onKeyPress(.escape) {
+            if isQuickPromptFocused && !quickPromptText.isEmpty {
+                quickPromptText = ""
+                return .handled
+            }
             onClose()
             return .handled
         }
         .onKeyPress(.return) {
+            if !quickPromptText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                executeQuickPrompt()
+                return .handled
+            }
             selectCurrentAction()
             return .handled
+        }
+    }
+
+    func executeQuickPrompt() {
+        let prompt = quickPromptText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty else { return }
+
+        let quickAction = Action(
+            name: "Quick Prompt",
+            icon: "bolt.fill",
+            prompt: prompt,
+            shortcut: "",
+            shortcutModifiers: []
+        )
+
+        quickPromptText = ""
+        onClose()
+
+        globalAppDelegate?.pendingAction = quickAction
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            globalAppDelegate?.showPopoverWithAction()
         }
     }
 
