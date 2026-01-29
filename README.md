@@ -1,111 +1,79 @@
-# TexTab
-
-A macOS menu bar app for quick AI-powered text actions and utility plugins.
-
-Select any text, hit a shortcut, and get instant grammar fixes, rephrasing, translations, and more — without leaving your current app.
-
-<!-- VIDEO: drag your paso2.2 video here using GitHub's web editor and it will embed automatically -->
-
 <p align="center">
-  <img src="screenshots/screenshot1.png" width="600" alt="TexTab main popup">
+  <img src="screenshots/logo.png" width="80" alt="TexTab logo">
 </p>
 
+<h1 align="center">TexTab</h1>
+
+<p align="center">Turn any AI task into a keyboard shortcut.</p>
+
 <p align="center">
-  <img src="screenshots/screenshot2.png" width="600" alt="TexTab settings">
+  <a href="https://textab.me">Website</a> · <a href="https://github.com/ELPROFUG0/TexTab/issues">Issues</a> · <a href="https://x.com/elmoidev">Twitter</a>
 </p>
 
-## What it does
+<br />
 
-TexTab sits in your menu bar and gives you fast access to AI text transformations through a popup. You select text anywhere on your Mac, trigger it with a hotkey (default `Cmd+Shift+T`), and pick an action.
+<p align="center">
+  <img src="screenshots/screenshot1.png" width="100%" alt="Turn any AI task into a Keyboard Shortcut">
+</p>
 
-**Built-in actions:**
-- Fix grammar and spelling
-- Rephrase for clarity
-- Shorten text
-- Formalize tone
-- Translate to Spanish
-- ...or create your own custom actions with any prompt you want
+<br />
 
-**Supports multiple AI providers:**
-- OpenAI
-- Anthropic (Claude)
-- OpenRouter
-- Perplexity (with web search)
-- Groq
+## About
 
-You bring your own API key.
+TexTab is a macOS menu bar app that lets you trigger AI-powered text actions with a keyboard shortcut. Select text in any app, press `Cmd+Shift+T`, pick an action — done.
 
-## Plugins
+Your API key, your model. No subscriptions, no middlemen.
 
-TexTab also has a small plugin marketplace built in:
+<br />
 
-- **Chat** — talk directly to the AI from the popup
-- **QR Code Generator** — turn text or URLs into QR codes
-- **Image Converter** — convert between PNG, JPEG, WEBP, TIFF
-- **Color Picker** — pick any color from your screen
+<p align="center">
+  <img src="screenshots/screenshot2.png" width="100%" alt="Your AI, your rules">
+</p>
 
-Plugins can be installed and removed from the settings.
+<br />
+
+## Features
+
+- **Custom actions** — create unlimited prompts, each with its own shortcut
+- **Multiple providers** — OpenAI, Claude, Groq, OpenRouter, Perplexity
+- **Plugins** — Chat, QR Generator, Image Converter, Color Picker
+- **Privacy first** — your API key talks directly to the provider
+- **Works everywhere** — any app, any text field
+
+<br />
+
+<p align="center">
+  <img src="screenshots/screenshot3.png" width="100%" alt="Open Source">
+</p>
+
+<br />
 
 ## Getting started
+
+```bash
+git clone https://github.com/ELPROFUG0/TexTab.git
+```
+
+1. Open `typo/typo.xcodeproj` in Xcode
+2. Copy the secrets template:
+   ```bash
+   cp Secrets.example.swift typo/typo/Secrets.swift
+   ```
+3. Fill in your values in `Secrets.swift` (gitignored)
+4. Add `Secrets.swift` to the Xcode target
+5. Build and run (`Cmd+R`)
 
 ### Requirements
 
 - macOS 13+
 - Xcode 15+
-- A free [Supabase](https://supabase.com) project (for auth and subscriptions)
-- At least one AI provider API key
+- An AI provider API key (OpenAI, Anthropic, etc.)
 
-### Setup
+<br />
 
-1. Clone the repo:
-   ```
-   git clone https://github.com/ELPROFUG0/TexTab.git
-   ```
+## Contributing
 
-2. Open `typo/typo.xcodeproj` in Xcode.
-
-3. Create your secrets file. Copy the template:
-   ```
-   cp Secrets.example.swift typo/typo/Secrets.swift
-   ```
-   Then fill in your real values (Supabase URL, anon key, etc). This file is gitignored.
-
-4. Make sure `Secrets.swift` is added to the Xcode target:
-   - In Xcode, right-click the `typo` folder → **Add Files to "typo"**
-   - Select `Secrets.swift`
-   - Make sure **"Add to targets: typo"** is checked
-
-5. Build and run (`Cmd+R`).
-
-6. The app will appear in your menu bar. Go to settings to add your API key.
-
-### Supabase (optional)
-
-If you want auth and subscription features to work, you'll need to set up:
-
-- A Supabase project with a `profiles` table
-- Edge Functions for Stripe checkout (`create-checkout`) and webhook handling (`stripe-webhook`)
-- The corresponding environment variables in your Supabase dashboard
-
-If you just want to use the text actions locally, you can skip this.
-
-## Project structure
-
-```
-typo/
-├── typo/                    # Main app source
-│   ├── typoApp.swift        # App entry point
-│   ├── AuthManager.swift    # Auth & subscription logic
-│   ├── ContentView.swift    # Main popup view
-│   ├── SettingsView.swift   # Settings window
-│   ├── Plugins/             # Built-in plugins
-│   └── Secrets.swift        # Your credentials (gitignored)
-├── supabase/
-│   └── functions/           # Edge Functions (Deno/TypeScript)
-├── provider_icons/          # AI provider logos
-├── Secrets.example.swift    # Template for Secrets.swift
-└── LICENSE                  # GPL v3
-```
+Fork it, improve it, make it yours. PRs welcome.
 
 ## License
 
