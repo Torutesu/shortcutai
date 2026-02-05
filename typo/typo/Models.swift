@@ -469,7 +469,8 @@ class ActionsStore: ObservableObject {
             name: "Translate to Spanish",
             icon: "translate",
             prompt: "Translate the following text to Spanish. Return only the translation:",
-            shortcut: "T"
+            shortcut: "H",
+            shortcutModifiers: ["\u{2318}"]
         ),
     ]
 }

@@ -1524,12 +1524,6 @@ struct NewActionRow: View {
                 .foregroundColor(Color.gray)
 
             Spacer()
-
-            HStack(spacing: 4) {
-                KeyboardKey("⌘")
-                KeyboardKey("⇧")
-                KeyboardKey("N")
-            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
