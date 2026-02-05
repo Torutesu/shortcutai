@@ -54,6 +54,9 @@ enum PluginResult {
 class PluginProcessor {
     static let shared = PluginProcessor()
 
+    // Keep reference to color sampler to prevent premature deallocation
+    private var colorSampler: NSColorSampler?
+
     func process(pluginType: PluginType, input: String) -> PluginResult {
         switch pluginType {
         case .chat:
@@ -156,8 +159,8 @@ class PluginProcessor {
             return .error("Failed to convert image to \(format.rawValue)")
         }
 
-        // Create NSImage from converted data
-        guard let convertedImage = NSImage(data: data) else {
+        // Verify the converted data is valid
+        guard NSImage(data: data) != nil else {
             return .error("Failed to create image from converted data")
         }
 
@@ -212,8 +215,19 @@ class PluginProcessor {
     // MARK: - Color Picker
 
     func pickColorFromScreen(completion: @escaping (PluginResult) -> Void) {
+        // Clean up any existing sampler first
+        colorSampler = nil
+
+        // Create and retain new sampler
         let sampler = NSColorSampler()
-        sampler.show { selectedColor in
+        colorSampler = sampler
+
+        sampler.show { [weak self] selectedColor in
+            // Clean up sampler reference after completion
+            DispatchQueue.main.async {
+                self?.colorSampler = nil
+            }
+
             guard let color = selectedColor else {
                 completion(.error("Color picking cancelled"))
                 return
@@ -242,7 +256,7 @@ class PluginProcessor {
             let bClamped = max(0, min(255, bInt))
 
             let hex = String(format: "#%02X%02X%02X", rClamped, gClamped, bClamped)
-            let hsl = self.rgbToHSL(r: rClamped, g: gClamped, b: bClamped)
+            let hsl = self?.rgbToHSL(r: rClamped, g: gClamped, b: bClamped) ?? (h: 0, s: 0, l: 0)
 
             let result = """
 HEX: \(hex)
