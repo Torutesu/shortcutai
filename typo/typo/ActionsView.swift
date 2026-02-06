@@ -234,6 +234,7 @@ struct ActionEditorView: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             VStack(spacing: 0) {
+                ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                         // Header with icon and name
                         HStack(spacing: 12) {
@@ -389,8 +390,10 @@ struct ActionEditorView: View {
                     }
                 }
                 .padding(24)
+                }
+                .scrollIndicators(.hidden)
 
-                // Footer with Delete and Saved buttons
+                // Footer with Delete and Saved buttons (fixed at bottom)
                 HStack {
                     Button(action: {
                         if showDeleteConfirmation {

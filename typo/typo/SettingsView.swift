@@ -33,6 +33,7 @@ func openAccessibilitySettings() {
 struct SettingsView: View {
     @StateObject private var store = ActionsStore.shared
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var updateChecker = UpdateChecker.shared
     @State private var selectedTab = 1
     @State private var selectedAction: Action?
 
@@ -93,8 +94,19 @@ struct SettingsView: View {
                 }
             }
             .padding(.vertical, 12)
+            .onAppear {
+                // Check for updates when settings opens
+                updateChecker.checkForUpdates()
+            }
 
             Divider()
+
+            // Update available banner
+            if updateChecker.updateAvailable {
+                UpdateBanner(version: updateChecker.latestVersion ?? "", onDownload: {
+                    updateChecker.openDownloadPage()
+                })
+            }
 
             // Tab Content with animation
             Group {
@@ -297,6 +309,44 @@ struct DotPatternView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Update Banner
+
+struct UpdateBanner: View {
+    let version: String
+    let onDownload: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 18))
+                .foregroundColor(.white)
+
+            Text("Version \(version) is available")
+                .font(.nunitoBold(size: 13))
+                .foregroundColor(.white)
+
+            Spacer()
+
+            Button(action: onDownload) {
+                Text("Download")
+                    .font(.nunitoBold(size: 12))
+                    .foregroundColor(Color(red: 0.0, green: 0.584, blue: 1.0))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.white)
+                    )
+            }
+            .buttonStyle(.plain)
+            .pointerCursor()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(Color(red: 0.0, green: 0.584, blue: 1.0))
     }
 }
 

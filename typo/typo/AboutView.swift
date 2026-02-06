@@ -11,7 +11,9 @@ struct AboutView: View {
     @Environment(\.colorScheme) var colorScheme
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var actionsStore = ActionsStore.shared
+    @StateObject private var updateChecker = UpdateChecker.shared
     @State private var showPaywall: Bool = false
+    @State private var showUpdateAlert: Bool = false
 
     // App accent blue color
     private var appBlue: Color {
@@ -233,7 +235,7 @@ struct AboutView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.primary)
 
-                            Text("Keep TexTab up to date")
+                            Text("Version \(updateChecker.currentVersion)")
                                 .font(.system(size: 13))
                                 .foregroundColor(.secondary)
                         }
@@ -241,24 +243,58 @@ struct AboutView: View {
                         Spacer()
 
                         Button(action: {
-                            if let url = URL(string: "https://typo.app/updates") {
-                                NSWorkspace.shared.open(url)
-                            }
+                            updateChecker.checkForUpdates()
                         }) {
-                            Text("Check")
-                                .font(.nunitoRegularBold(size: 12))
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.gray.opacity(0.1))
-                                )
+                            if updateChecker.isChecking {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                                    .frame(width: 60, height: 30)
+                            } else {
+                                Text("Check")
+                                    .font(.nunitoRegularBold(size: 12))
+                                    .foregroundColor(.secondary)
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Capsule()
+                                            .fill(Color.gray.opacity(0.1))
+                                    )
+                            }
                         }
                         .buttonStyle(.plain)
                         .pointerCursor()
+                        .disabled(updateChecker.isChecking)
                     }
                     .padding(.vertical, 20)
+                    .onChange(of: updateChecker.isChecking) { _, isChecking in
+                        if !isChecking {
+                            showUpdateAlert = true
+                        }
+                    }
+                    .alert(isPresented: $showUpdateAlert) {
+                        if updateChecker.updateAvailable {
+                            Alert(
+                                title: Text("Update Available"),
+                                message: Text("Version \(updateChecker.latestVersion ?? "") is available. You are currently on version \(updateChecker.currentVersion)."),
+                                primaryButton: .default(Text("Download")) {
+                                    updateChecker.openDownloadPage()
+                                },
+                                secondaryButton: .cancel(Text("Later"))
+                            )
+                        } else if let error = updateChecker.errorMessage {
+                            Alert(
+                                title: Text("Error"),
+                                message: Text(error),
+                                dismissButton: .default(Text("OK"))
+                            )
+                        } else {
+                            Alert(
+                                title: Text("Up to Date"),
+                                message: Text("You're running the latest version (\(updateChecker.currentVersion))."),
+                                dismissButton: .default(Text("OK"))
+                            )
+                        }
+                    }
 
                     Divider()
 
