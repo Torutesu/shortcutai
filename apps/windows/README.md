@@ -15,6 +15,8 @@ Windows desktop implementation of ShortcutAI using Tauri + React.
 - ✅ Local execution logs + prompt auto-suggestion via shared core
 - ✅ Native persistence (setup.json, execution-logs.json)
 - ✅ System tray integration (minimize to tray, left-click to show)
+- ✅ Multiple actions support (add, edit, delete actions with full CRUD UI)
+- ✅ Action selector in popup (choose which action to run on captured text)
 - ✅ Browser preview mode with localStorage fallback
 
 ## Prerequisites
@@ -94,9 +96,9 @@ This generates all required icon formats (`.ico`, `.png`) in `src-tauri/icons/`.
 ## Next Steps
 
 - **Secure API key storage:** Use Windows Credential Manager or encrypted store instead of plain JSON
-- **Multiple actions:** Support saving and switching between multiple named actions
-- **Auto-start on login:** Add Windows startup registry entry
-- **Customizable shortcuts per action:** Allow different hotkeys for different actions
+- **Auto-start on login:** Add Windows startup registry entry or Task Scheduler integration
+- **Per-action global shortcuts:** Allow assigning different hotkeys to specific actions
+- **Action categories/tags:** Organize actions by type (grammar, translation, summarization, etc.)
 
 ## Architecture
 
@@ -113,7 +115,7 @@ This generates all required icon formats (`.ico`, `.png`) in `src-tauri/icons/`.
 | Text capture                | ✅ Accessibility API | ✅ Clipboard (Ctrl+C)   |
 | Paste-back                  | ✅ CGEvent           | ✅ Clipboard (Ctrl+V)   |
 | System tray/menu bar        | ✅ NSStatusBar       | ✅ SystemTray           |
-| Multi-action UI             | ✅                   | ⏳ Planned              |
+| Multi-action UI             | ✅                   | ✅ Full CRUD support    |
 | Secure keychain storage     | ✅ Keychain Services | ⏳ Planned              |
 | AI provider integration     | ✅ Native HTTP       | ✅ Fetch API            |
 
