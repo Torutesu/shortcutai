@@ -27,11 +27,21 @@
       "active": true,
       "identifier": "ai.shortcut.app",
       "targets": "all",
+      "icon": [
+        "icons/icon.ico",
+        "icons/icon.png"
+      ],
       "windows": {
         "wix": {
           "language": ["en-US", "ja-JP"]
         }
       }
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": false,
+      "menuOnLeftClick": false,
+      "title": "ShortcutAI"
     },
     "windows": [
       {

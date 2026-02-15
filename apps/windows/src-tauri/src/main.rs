@@ -8,7 +8,10 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
-use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
+use tauri::{
+  AppHandle, CustomMenuItem, GlobalShortcutManager, Manager, State, SystemTray, SystemTrayEvent,
+  SystemTrayMenu, SystemTrayMenuItem,
+};
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -307,7 +310,41 @@ fn append_execution_log(
 }
 
 fn main() {
+  let show_item = CustomMenuItem::new("show", "Show ShortcutAI");
+  let quit_item = CustomMenuItem::new("quit", "Quit");
+
+  let tray_menu = SystemTrayMenu::new()
+    .add_item(show_item)
+    .add_native_item(SystemTrayMenuItem::Separator)
+    .add_item(quit_item);
+
+  let system_tray = SystemTray::new().with_menu(tray_menu);
+
   tauri::Builder::default()
+    .system_tray(system_tray)
+    .on_system_tray_event(|app, event| match event {
+      SystemTrayEvent::LeftClick { .. } => {
+        if let Some(window) = app.get_window("main") {
+          let _ = window.show();
+          let _ = window.unminimize();
+          let _ = window.set_focus();
+        }
+      }
+      SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+        "show" => {
+          if let Some(window) = app.get_window("main") {
+            let _ = window.show();
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+          }
+        }
+        "quit" => {
+          std::process::exit(0);
+        }
+        _ => {}
+      },
+      _ => {}
+    })
     .setup(|app| {
       let app_handle = app.handle();
       let logs = load_logs_from_disk(&app_handle);

@@ -1,24 +1,35 @@
-# ShortcutAI Windows App (Preview)
+# ShortcutAI Windows App
 
-## Status
+Windows desktop implementation of ShortcutAI using Tauri + React.
 
-This app is an implementation scaffold for Windows using Tauri + React.
+## Current Status
 
-Implemented now:
+**Fully implemented:**
+- ✅ Global shortcut registration and unregistration
+- ✅ Selected text capture via Ctrl+C simulation (clipboard-based)
+- ✅ AI provider integration (OpenAI, Anthropic, OpenRouter, Perplexity, Groq)
+- ✅ Safe paste-back flow (Ctrl+V simulation to original app)
+- ✅ Action popup UI (captured text → run → result → apply)
+- ✅ In-app language switch (System / English / 日本語)
+- ✅ Setup wizard (permissions, API key, first action)
+- ✅ Local execution logs + prompt auto-suggestion via shared core
+- ✅ Native persistence (setup.json, execution-logs.json)
+- ✅ System tray integration (minimize to tray, left-click to show)
+- ✅ Browser preview mode with localStorage fallback
 
-- In-app language switch (`System / English / 日本語`)
-- One-screen setup wizard (permission check, API key, first action)
-- Local execution logs + prompt auto-suggestion
-- Native persistence commands via Tauri (`setup.json`, `execution-logs.json`)
+## Prerequisites
 
-## Prerequisites (Windows)
-
+**Windows:**
 - Node.js 20+
-- Rust stable (with `rustup`)
-- Visual Studio Build Tools (C++ workload)
-- WebView2 Runtime
+- Rust stable (via `rustup`: https://rustup.rs/)
+- Visual Studio Build Tools with C++ workload
+- WebView2 Runtime (usually pre-installed on Windows 10/11)
 
-## Run in browser preview
+**Development (any OS):**
+- Node.js 20+
+- Rust stable (for Tauri backend compilation)
+
+## Run in Browser Preview
 
 ```bash
 cd apps/windows
@@ -26,7 +37,11 @@ npm install
 npm run dev
 ```
 
-## Run as Tauri desktop app
+Open http://127.0.0.1:1420 in your browser.
+
+**Note:** Browser preview mode simulates the Tauri environment using localStorage and web APIs. Native features (global shortcut, Ctrl+C/V simulation, system tray) won't work.
+
+## Run as Tauri Desktop App
 
 ```bash
 cd apps/windows
@@ -34,15 +49,74 @@ npm install
 npm run tauri:dev
 ```
 
-## Build desktop package
+The app window will appear. The system tray icon will show in the Windows taskbar tray area (bottom-right).
+
+## Build Desktop Package
 
 ```bash
 cd apps/windows
 npm run tauri:build
 ```
 
-## Next implementation targets
+Output: `src-tauri/target/release/bundle/`
 
-1. Real global shortcut registration on Windows.
-2. Selected text capture + safe paste-back flow.
-3. Provider SDK integration and secure API key storage.
+## Icon Generation
+
+The app requires icons for the system tray and window. See [`src-tauri/icons/README.md`](src-tauri/icons/README.md) for instructions on generating icon files from a source PNG.
+
+**Quick setup:**
+```bash
+npm install -g @tauri-apps/cli
+tauri icon path/to/your-icon-1024x1024.png
+```
+
+This generates all required icon formats (`.ico`, `.png`) in `src-tauri/icons/`.
+
+## How It Works
+
+1. **Setup:** User configures API key, selects provider, defines first action (prompt).
+2. **Global Shortcut:** Registers Ctrl+Shift+T (customizable) via Tauri's GlobalShortcutManager.
+3. **Text Capture:** When shortcut fires:
+   - Rust backend saves current clipboard
+   - Simulates Ctrl+C to copy selected text
+   - Reads clipboard, emits `text-captured` event to frontend
+   - Restores previous clipboard content
+   - Shows app window and focuses it
+4. **Action Popup:** Frontend displays captured text, user clicks "Run".
+5. **AI Call:** Frontend calls AI provider API via fetch() with the action prompt.
+6. **Apply & Paste:**
+   - User clicks "Apply & Paste"
+   - Window hides (original app regains focus)
+   - Result is written to clipboard
+   - Ctrl+V is simulated to paste into original app
+7. **System Tray:** App lives in Windows system tray. Left-click tray icon to show/hide window. Right-click for menu (Show, Quit).
+
+## Next Steps
+
+- **Secure API key storage:** Use Windows Credential Manager or encrypted store instead of plain JSON
+- **Multiple actions:** Support saving and switching between multiple named actions
+- **Auto-start on login:** Add Windows startup registry entry
+- **Customizable shortcuts per action:** Allow different hotkeys for different actions
+
+## Architecture
+
+- **Frontend:** React + TypeScript (shared UI logic with macOS where feasible)
+- **Backend:** Rust + Tauri v1 (global shortcut, clipboard, keyboard simulation via `arboard` + `enigo`)
+- **Core:** Shared TypeScript library (`shared/core/src`) for action stats, prompt suggestions, execution log schema
+- **Platform abstraction:** `platform.ts` provides Tauri vs. browser environment detection and fallbacks
+
+## Differences from macOS App
+
+| Feature                     | macOS (Swift)        | Windows (Tauri + React) |
+|-----------------------------|----------------------|-------------------------|
+| Global shortcut             | ✅ NSEvent           | ✅ Tauri GlobalShortcut |
+| Text capture                | ✅ Accessibility API | ✅ Clipboard (Ctrl+C)   |
+| Paste-back                  | ✅ CGEvent           | ✅ Clipboard (Ctrl+V)   |
+| System tray/menu bar        | ✅ NSStatusBar       | ✅ SystemTray           |
+| Multi-action UI             | ✅                   | ⏳ Planned              |
+| Secure keychain storage     | ✅ Keychain Services | ⏳ Planned              |
+| AI provider integration     | ✅ Native HTTP       | ✅ Fetch API            |
+
+## Contributing
+
+See the root [CONTRIBUTING.md](../../CONTRIBUTING.md) for contribution guidelines.

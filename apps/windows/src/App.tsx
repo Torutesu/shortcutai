@@ -412,6 +412,8 @@ export function App() {
   const handleApply = async (result: string) => {
     // Hide our window so the original app regains focus, then paste.
     await hideWindow();
+    // Wait for window to fully hide and original app to regain focus.
+    await new Promise((resolve) => setTimeout(resolve, 200));
     await pasteText(result);
     setPopup({ phase: "idle" });
   };
