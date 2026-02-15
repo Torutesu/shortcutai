@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct ExecutionLogEntry: Codable, Identifiable {
     let id: UUID
