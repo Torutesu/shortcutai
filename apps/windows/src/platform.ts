@@ -5,7 +5,24 @@ import {
 } from "@tauri-apps/api/clipboard";
 import type { ExecutionLogEntry } from "../../../shared/core/src";
 
+export interface Action {
+  id: string;
+  name: string;
+  prompt: string;
+  createdAt: string;
+  lastUsedAt?: string;
+}
+
 export interface SetupPayload {
+  provider: string;
+  apiKey: string;
+  actions: Action[];
+  defaultActionId?: string;
+  setupCompletedAt: string;
+}
+
+// Legacy format (backward compatibility)
+interface LegacySetupPayload {
   provider: string;
   apiKey: string;
   actionName: string;
@@ -55,16 +72,41 @@ export async function checkPermissions(): Promise<PermissionStatus> {
   };
 }
 
+function migrateSetup(raw: SetupPayload | LegacySetupPayload): SetupPayload {
+  // Check if it's legacy format (has actionName instead of actions array)
+  if ("actionName" in raw && "prompt" in raw && !("actions" in raw)) {
+    const legacy = raw as LegacySetupPayload;
+    const action: Action = {
+      id: crypto.randomUUID(),
+      name: legacy.actionName,
+      prompt: legacy.prompt,
+      createdAt: legacy.setupCompletedAt,
+    };
+    return {
+      provider: legacy.provider,
+      apiKey: legacy.apiKey,
+      actions: [action],
+      defaultActionId: action.id,
+      setupCompletedAt: legacy.setupCompletedAt,
+    };
+  }
+  return raw as SetupPayload;
+}
+
 export async function loadSetup(): Promise<SetupPayload | null> {
+  let setup: SetupPayload | LegacySetupPayload | null = null;
+
   if (isTauriRuntime()) {
     try {
-      return await invoke<SetupPayload | null>("load_setup");
+      setup = await invoke<SetupPayload | null>("load_setup");
     } catch {
       return null;
     }
+  } else {
+    setup = parseJson<SetupPayload | LegacySetupPayload>(localStorage.getItem(SETUP_KEY));
   }
 
-  return parseJson<SetupPayload>(localStorage.getItem(SETUP_KEY));
+  return setup ? migrateSetup(setup) : null;
 }
 
 export async function saveSetup(setup: SetupPayload): Promise<void> {

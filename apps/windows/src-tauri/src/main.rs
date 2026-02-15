@@ -23,11 +23,21 @@ struct PermissionStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct Action {
+  id: String,
+  name: String,
+  prompt: String,
+  created_at: String,
+  last_used_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct SetupPayload {
   provider: String,
   api_key: String,
-  action_name: String,
-  prompt: String,
+  actions: Vec<Action>,
+  default_action_id: Option<String>,
   setup_completed_at: String,
 }
 

@@ -295,19 +295,47 @@ button:disabled {
   color: #0e3a1f;
 }
 
-.popup-action-row {
+.popup-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #e8eef8;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.popup-action-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px 16px;
-  border-top: 1px solid #e8eef8;
+  padding: 10px 12px;
+  border: 1px solid #dce8f9;
+  border-radius: 10px;
+  background: #f9fbff;
+  transition: background 0.15s ease;
+}
+
+.popup-action-item:hover {
+  background: #f0f6ff;
 }
 
 .popup-action-name {
   flex: 1;
   font-weight: 600;
   color: #10213d;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+}
+
+.popup-action-item button {
+  min-width: 80px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+}
+
+.button-running {
+  opacity: 0.6;
+  cursor: wait !important;
 }
 
 .popup-buttons {
@@ -321,6 +349,82 @@ button:disabled {
 .popup-buttons button {
   flex: 1;
   min-width: 120px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Actions manager (Step 3 setup)                                              */
+/* -------------------------------------------------------------------------- */
+
+.actions-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-item {
+  border: 1px solid #d5dff0;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fafcff;
+}
+
+.action-item > div:first-child:not(.action-edit-form) {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.action-info {
+  flex: 1;
+}
+
+.action-info strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #10213d;
+  font-size: 0.98rem;
+}
+
+.action-prompt-preview {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #5a6e8a;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.action-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.action-controls button {
+  min-width: 70px;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+}
+
+.action-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-edit-form input,
+.action-edit-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #c3d1e9;
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+
+.action-edit-form textarea {
+  min-height: 80px;
+  resize: vertical;
 }
 
 /* -------------------------------------------------------------------------- */

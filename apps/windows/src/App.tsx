@@ -18,12 +18,12 @@ import {
   saveSetup,
   unregisterGlobalShortcut,
   writeClipboardText,
+  type Action,
   type PermissionStatus,
   type Provider,
 } from "./platform";
 import { t, type AppLanguage } from "./i18n";
 
-const ACTION_ID = "first-action";
 const LANGUAGE_KEY = "shortcutai_windows_language";
 
 function loadLanguagePreference(): AppLanguage {
@@ -41,8 +41,8 @@ function loadLanguagePreference(): AppLanguage {
 type PopupPhase =
   | { phase: "idle" }
   | { phase: "captured"; text: string }
-  | { phase: "running"; text: string }
-  | { phase: "result"; originalText: string; result: string }
+  | { phase: "running"; text: string; actionId: string }
+  | { phase: "result"; originalText: string; result: string; actionName: string }
   | { phase: "error"; originalText: string; message: string };
 
 // ---------------------------------------------------------------------------
@@ -51,8 +51,8 @@ type PopupPhase =
 
 interface ActionPopupProps {
   state: PopupPhase;
-  actionName: string;
-  onRun: (text: string) => void;
+  actions: Action[];
+  onRun: (actionId: string, text: string) => void;
   onApply: (result: string) => void;
   onCopy: (result: string) => void;
   onClose: () => void;
@@ -62,7 +62,7 @@ interface ActionPopupProps {
 
 function ActionPopup({
   state,
-  actionName,
+  actions,
   onRun,
   onApply,
   onCopy,
@@ -80,8 +80,10 @@ function ActionPopup({
         : "";
 
   const result = state.phase === "result" ? state.result : null;
+  const resultActionName = state.phase === "result" ? state.actionName : "";
   const errorMessage = state.phase === "error" ? state.message : null;
   const isRunning = state.phase === "running";
+  const runningActionId = state.phase === "running" ? state.actionId : null;
 
   return (
     <div className="popup-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -101,21 +103,28 @@ function ActionPopup({
         </div>
 
         {!result && !errorMessage && (
-          <div className="popup-action-row">
-            <span className="popup-action-name">{actionName}</span>
-            <button
-              onClick={() => capturedText && onRun(capturedText)}
-              disabled={isRunning || !capturedText}
-            >
-              {isRunning ? tr("popupRunning") : "▶ Run"}
-            </button>
+          <div className="popup-actions-list">
+            {actions.map((action) => (
+              <div key={action.id} className="popup-action-item">
+                <span className="popup-action-name">{action.name}</span>
+                <button
+                  onClick={() => capturedText && onRun(action.id, capturedText)}
+                  disabled={isRunning || !capturedText}
+                  className={runningActionId === action.id ? "button-running" : ""}
+                >
+                  {runningActionId === action.id ? tr("popupRunning") : "▶ Run"}
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
         {result !== null && (
           <>
             <div className="popup-section">
-              <label>{tr("popupResultLabel")}</label>
+              <label>
+                {tr("popupResultLabel")} — {resultActionName}
+              </label>
               <div className="popup-text-box popup-result">{result}</div>
             </div>
             <div className="popup-buttons">
@@ -140,12 +149,6 @@ function ActionPopup({
               </p>
             </div>
             <div className="popup-buttons">
-              <button
-                className="button-secondary"
-                onClick={() => capturedText && onRun(capturedText)}
-              >
-                Retry
-              </button>
               <button className="button-ghost" onClick={onClose}>
                 {tr("popupClose")}
               </button>
@@ -172,10 +175,15 @@ export function App() {
   const [capturedClipboard, setCapturedClipboard] = useState("");
   const [provider, setProvider] = useState<Provider>("OpenAI");
   const [apiKey, setApiKey] = useState("");
-  const [actionName, setActionName] = useState("Rewrite politely");
-  const [prompt, setPrompt] = useState(
-    "Rewrite the text in a polite and concise tone. Return only the rewritten text.",
-  );
+  const [actions, setActions] = useState<Action[]>([
+    {
+      id: crypto.randomUUID(),
+      name: "Rewrite politely",
+      prompt: "Rewrite the text in a polite and concise tone. Return only the rewritten text.",
+      createdAt: new Date().toISOString(),
+    },
+  ]);
+  const [defaultActionId, setDefaultActionId] = useState<string | undefined>(undefined);
   const [setupDone, setSetupDone] = useState(false);
   const [logs, setLogs] = useState<ExecutionLogEntry[]>([]);
 
@@ -183,15 +191,19 @@ export function App() {
   const [popup, setPopup] = useState<PopupPhase>({ phase: "idle" });
   const [copied, setCopied] = useState(false);
 
+  // Editing state for actions
+  const [editingActionId, setEditingActionId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPrompt, setEditPrompt] = useState("");
+
   // Refs to hold the latest values inside the event listener closure.
   const providerRef = useRef(provider);
   const apiKeyRef = useRef(apiKey);
-  const promptRef = useRef(prompt);
-  const actionNameRef = useRef(actionName);
+  const actionsRef = useRef(actions);
+
   useEffect(() => { providerRef.current = provider; }, [provider]);
   useEffect(() => { apiKeyRef.current = apiKey; }, [apiKey]);
-  useEffect(() => { promptRef.current = prompt; }, [prompt]);
-  useEffect(() => { actionNameRef.current = actionName; }, [actionName]);
+  useEffect(() => { actionsRef.current = actions; }, [actions]);
 
   useEffect(() => {
     localStorage.setItem(LANGUAGE_KEY, language);
@@ -217,8 +229,8 @@ export function App() {
       if (savedSetup) {
         setProvider(savedSetup.provider as Provider);
         setApiKey(savedSetup.apiKey);
-        setActionName(savedSetup.actionName);
-        setPrompt(savedSetup.prompt);
+        setActions(savedSetup.actions);
+        setDefaultActionId(savedSetup.defaultActionId);
         setSetupDone(true);
       }
     }
@@ -250,14 +262,19 @@ export function App() {
     return () => { unlisten?.(); };
   }, []);
 
-  const stats = useMemo(() => computeActionStats(logs, ACTION_ID), [logs]);
-  const autoSuggestion = useMemo(() => suggestPrompt(prompt, stats), [prompt, stats]);
+  const firstActionId = actions[0]?.id || "";
+  const stats = useMemo(() => computeActionStats(logs, firstActionId), [logs, firstActionId]);
+  const firstAction = actions[0];
+  const autoSuggestion = useMemo(
+    () => (firstAction ? suggestPrompt(firstAction.prompt, stats) : null),
+    [firstAction, stats],
+  );
 
   const canFinish =
     permissionGranted &&
     apiKey.trim().length > 0 &&
-    actionName.trim().length > 0 &&
-    prompt.trim().length > 0;
+    actions.length > 0 &&
+    actions.every((a) => a.name.trim().length > 0 && a.prompt.trim().length > 0);
 
   const tr = (key: Parameters<typeof t>[1]) => t(language, key);
 
@@ -270,8 +287,8 @@ export function App() {
     await saveSetup({
       provider,
       apiKey,
-      actionName,
-      prompt,
+      actions,
+      defaultActionId,
       setupCompletedAt: new Date().toISOString(),
     });
     setSetupDone(true);
@@ -331,12 +348,15 @@ export function App() {
 
   const appendLog = async (success: boolean) => {
     const errorMessage = success ? null : "Network issue during request.";
+    const firstActionLocal = actions[0];
+    if (!firstActionLocal) return;
+
     const entry: ExecutionLogEntry = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
-      actionId: ACTION_ID,
-      actionName,
-      prompt,
+      actionId: firstActionLocal.id,
+      actionName: firstActionLocal.name,
+      prompt: firstActionLocal.prompt,
       provider,
       modelId: success ? "gpt-4o-mini" : "web-search",
       durationMs: success ? 1200 + Math.random() * 2000 : 9000 + Math.random() * 5000,
@@ -350,30 +370,83 @@ export function App() {
   };
 
   // -------------------------------------------------------------------------
+  // Action management
+  // -------------------------------------------------------------------------
+
+  const addAction = () => {
+    const newAction: Action = {
+      id: crypto.randomUUID(),
+      name: "New Action",
+      prompt: "Enter your prompt here.",
+      createdAt: new Date().toISOString(),
+    };
+    setActions([...actions, newAction]);
+    setEditingActionId(newAction.id);
+    setEditName(newAction.name);
+    setEditPrompt(newAction.prompt);
+  };
+
+  const startEdit = (action: Action) => {
+    setEditingActionId(action.id);
+    setEditName(action.name);
+    setEditPrompt(action.prompt);
+  };
+
+  const saveEdit = () => {
+    if (!editingActionId) return;
+    setActions(
+      actions.map((a) =>
+        a.id === editingActionId
+          ? { ...a, name: editName, prompt: editPrompt }
+          : a,
+      ),
+    );
+    setEditingActionId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingActionId(null);
+  };
+
+  const deleteAction = (id: string) => {
+    if (actions.length === 1) {
+      alert("Cannot delete the last action. At least one action is required.");
+      return;
+    }
+    setActions(actions.filter((a) => a.id !== id));
+    if (editingActionId === id) {
+      setEditingActionId(null);
+    }
+  };
+
+  // -------------------------------------------------------------------------
   // Action popup handlers
   // -------------------------------------------------------------------------
 
-  const runAction = async (text: string) => {
-    setPopup({ phase: "running", text });
+  const runAction = async (actionId: string, text: string) => {
+    const action = actionsRef.current.find((a) => a.id === actionId);
+    if (!action) return;
+
+    setPopup({ phase: "running", text, actionId });
     const start = Date.now();
 
     try {
       const result = await callAI(
         providerRef.current,
         apiKeyRef.current,
-        promptRef.current,
+        action.prompt,
         text,
       );
       const durationMs = Date.now() - start;
 
-      setPopup({ phase: "result", originalText: text, result });
+      setPopup({ phase: "result", originalText: text, result, actionName: action.name });
 
       const entry: ExecutionLogEntry = {
         id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
-        actionId: ACTION_ID,
-        actionName: actionNameRef.current,
-        prompt: promptRef.current,
+        actionId: action.id,
+        actionName: action.name,
+        prompt: action.prompt,
         provider: providerRef.current,
         modelId: null,
         durationMs,
@@ -384,6 +457,13 @@ export function App() {
       };
       const nextLogs = await appendExecutionLog(entry);
       setLogs(nextLogs);
+
+      // Update last used timestamp
+      setActions(
+        actionsRef.current.map((a) =>
+          a.id === actionId ? { ...a, lastUsedAt: new Date().toISOString() } : a,
+        ),
+      );
     } catch (error) {
       const durationMs = Date.now() - start;
       const message = String(error);
@@ -393,9 +473,9 @@ export function App() {
       const entry: ExecutionLogEntry = {
         id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
-        actionId: ACTION_ID,
-        actionName: actionNameRef.current,
-        prompt: promptRef.current,
+        actionId: action.id,
+        actionName: action.name,
+        prompt: action.prompt,
         provider: providerRef.current,
         modelId: null,
         durationMs,
@@ -410,9 +490,7 @@ export function App() {
   };
 
   const handleApply = async (result: string) => {
-    // Hide our window so the original app regains focus, then paste.
     await hideWindow();
-    // Wait for window to fully hide and original app to regain focus.
     await new Promise((resolve) => setTimeout(resolve, 200));
     await pasteText(result);
     setPopup({ phase: "idle" });
@@ -426,7 +504,6 @@ export function App() {
 
   const closePopup = () => setPopup({ phase: "idle" });
 
-  // In browser preview: manually trigger the popup with the draft text.
   const simulateShortcut = () => {
     setPopup({
       phase: "captured",
@@ -442,8 +519,8 @@ export function App() {
     <>
       <ActionPopup
         state={popup}
-        actionName={actionName}
-        onRun={(text) => void runAction(text)}
+        actions={actions}
+        onRun={(actionId, text) => void runAction(actionId, text)}
         onApply={(result) => void handleApply(result)}
         onCopy={(result) => void handleCopyResult(result)}
         onClose={closePopup}
@@ -551,20 +628,61 @@ export function App() {
 
           <div className="card">
             <h2>{tr("step3")}</h2>
-            <div className="grid">
-              <label>{tr("actionName")}</label>
-              <input
-                value={actionName}
-                onChange={(event) => setActionName(event.target.value)}
-              />
-              <label>{tr("prompt")}</label>
-              <textarea
-                value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
-                rows={4}
-              />
+            <div className="actions-manager">
+              {actions.map((action) => (
+                <div key={action.id} className="action-item">
+                  {editingActionId === action.id ? (
+                    <div className="action-edit-form">
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Action name"
+                      />
+                      <textarea
+                        value={editPrompt}
+                        onChange={(e) => setEditPrompt(e.target.value)}
+                        rows={3}
+                        placeholder="Prompt"
+                      />
+                      <div className="row buttons">
+                        <button className="button-primary" onClick={saveEdit}>
+                          Save
+                        </button>
+                        <button className="button-ghost" onClick={cancelEdit}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="action-info">
+                        <strong>{action.name}</strong>
+                        <p className="action-prompt-preview">{action.prompt}</p>
+                      </div>
+                      <div className="action-controls">
+                        <button className="button-secondary" onClick={() => startEdit(action)}>
+                          Edit
+                        </button>
+                        <button
+                          className="button-ghost"
+                          onClick={() => deleteAction(action.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+              <button className="button-outline" onClick={addAction}>
+                + Add Action
+              </button>
             </div>
-            <button disabled={!canFinish} onClick={() => void finishSetup()}>
+            <button
+              disabled={!canFinish}
+              onClick={() => void finishSetup()}
+              style={{ marginTop: "12px" }}
+            >
               {tr("finishSetup")}
             </button>
             {setupDone ? <p className="ok">{tr("setupSaved")}</p> : null}
@@ -593,12 +711,18 @@ export function App() {
               </>
             )}
 
-            {autoSuggestion ? (
+            {autoSuggestion && firstAction ? (
               <div className="suggestion">
                 <h3>{tr("suggestion")}</h3>
                 <p>{autoSuggestion.summary}</p>
                 {autoSuggestion.suggestedPrompt ? (
-                  <button onClick={() => setPrompt(autoSuggestion.suggestedPrompt!)}>
+                  <button
+                    onClick={() => {
+                      setEditingActionId(firstAction.id);
+                      setEditName(firstAction.name);
+                      setEditPrompt(autoSuggestion.suggestedPrompt!);
+                    }}
+                  >
                     {tr("applySuggestion")}
                   </button>
                 ) : null}
