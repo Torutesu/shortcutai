@@ -44,6 +44,18 @@ const dictionary = {
     topFailures: "Top failures",
     suggestion: "Auto Prompt Suggestion",
     applySuggestion: "Apply Suggestion",
+    // Action popup (shown after shortcut fires)
+    popupTitle: "ShortcutAI",
+    popupInputLabel: "Selected text",
+    popupEmptyText: "(no text captured — select text before pressing the shortcut)",
+    popupRunning: "Running…",
+    popupResultLabel: "Result",
+    popupApply: "Apply & Paste",
+    popupCopy: "Copy to clipboard",
+    popupClose: "Close",
+    popupError: "Error",
+    popupCopied: "Copied!",
+    popupSimulate: "Simulate shortcut (preview)",
   },
   ja: {
     title: "ShortcutAI for Windows（プレビュー）",
@@ -87,6 +99,18 @@ const dictionary = {
     topFailures: "主な失敗",
     suggestion: "自動プロンプト提案",
     applySuggestion: "提案を適用",
+    // Action popup (shown after shortcut fires)
+    popupTitle: "ShortcutAI",
+    popupInputLabel: "選択テキスト",
+    popupEmptyText: "（テキストが取得できませんでした。ショートカットを押す前にテキストを選択してください）",
+    popupRunning: "実行中…",
+    popupResultLabel: "結果",
+    popupApply: "適用＆ペースト",
+    popupCopy: "クリップボードにコピー",
+    popupClose: "閉じる",
+    popupError: "エラー",
+    popupCopied: "コピー完了！",
+    popupSimulate: "ショートカットをシミュレート（プレビュー）",
   },
 } as const;
 

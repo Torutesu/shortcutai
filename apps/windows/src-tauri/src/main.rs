@@ -1,12 +1,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use arboard::Clipboard;
+use enigo::{Enigo, Key, KeyboardControllable};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use tauri::{AppHandle, GlobalShortcutManager, State};
+use std::thread;
+use std::time::Duration;
+use tauri::{AppHandle, GlobalShortcutManager, Manager, State};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct PermissionStatus {
   global_shortcut_ready: bool,
@@ -96,6 +100,37 @@ fn load_logs_from_disk(handle: &AppHandle) -> Vec<ExecutionLogEntry> {
   }
 }
 
+/// Capture selected text from the foreground application via Ctrl+C simulation.
+/// Returns the captured text, or an empty string if nothing was selected.
+fn capture_selected_text() -> String {
+  // Save current clipboard contents so we can restore after capture.
+  let mut board = match Clipboard::new() {
+    Ok(b) => b,
+    Err(_) => return String::new(),
+  };
+  let previous = board.get_text().unwrap_or_default();
+
+  // Clear clipboard so we can detect whether Ctrl+C produced a new value.
+  let _ = board.set_text("");
+
+  // Simulate Ctrl+C to copy the selected text.
+  let mut enigo = Enigo::new();
+  enigo.key_down(Key::Control);
+  enigo.key_click(Key::Layout('c'));
+  enigo.key_up(Key::Control);
+
+  // Wait for the target application to write to the clipboard.
+  thread::sleep(Duration::from_millis(150));
+
+  // Read the (possibly new) clipboard value.
+  let captured = board.get_text().unwrap_or_default();
+
+  // Restore the previous clipboard content.
+  let _ = board.set_text(&previous);
+
+  captured
+}
+
 #[tauri::command]
 fn check_windows_permissions(handle: AppHandle) -> PermissionStatus {
   let probe_shortcut = "Ctrl+Shift+Alt+9";
@@ -109,12 +144,12 @@ fn check_windows_permissions(handle: AppHandle) -> PermissionStatus {
     Err(_) => false,
   };
 
+  let clipboard_ready = Clipboard::new().is_ok();
+
   PermissionStatus {
     global_shortcut_ready,
-    clipboard_ready: true,
-    note:
-      "Global shortcut probe executed. Clipboard APIs are available in the desktop runtime."
-        .to_string(),
+    clipboard_ready,
+    note: "Permission probe complete.".to_string(),
   }
 }
 
@@ -140,12 +175,28 @@ fn register_global_shortcut(
     if previous == &normalized {
       return Ok(());
     }
-
     let _ = shortcut_manager.unregister(previous);
   }
 
+  let app_handle = handle.clone();
   shortcut_manager
-    .register(&normalized, || {})
+    .register(&normalized, move || {
+      let h = app_handle.clone();
+      thread::spawn(move || {
+        // Capture selected text while the original app still has focus.
+        let text = capture_selected_text();
+
+        // Emit the captured text to the frontend.
+        let _ = h.emit_all("text-captured", &text);
+
+        // Bring the ShortcutAI window into view.
+        if let Some(window) = h.get_window("main") {
+          let _ = window.show();
+          let _ = window.unminimize();
+          let _ = window.set_focus();
+        }
+      });
+    })
     .map_err(|error| format!("Failed to register shortcut: {error}"))?;
 
   *registered = Some(normalized);
@@ -172,6 +223,39 @@ fn unregister_global_shortcut(
     .map_err(|error| format!("Failed to unregister shortcut: {error}"))?;
 
   *registered = None;
+  Ok(())
+}
+
+/// Write `text` to the clipboard, then simulate Ctrl+V to paste it into the
+/// foreground application.  The window must have been hidden or blurred first
+/// so that the original application receives the paste event.
+#[tauri::command]
+fn paste_text(text: String) -> Result<(), String> {
+  let mut board =
+    Clipboard::new().map_err(|error| format!("Clipboard init failed: {error}"))?;
+
+  board
+    .set_text(&text)
+    .map_err(|error| format!("Clipboard write failed: {error}"))?;
+
+  // Small delay to let the clipboard settle before simulating the paste.
+  thread::sleep(Duration::from_millis(80));
+
+  let mut enigo = Enigo::new();
+  enigo.key_down(Key::Control);
+  enigo.key_click(Key::Layout('v'));
+  enigo.key_up(Key::Control);
+
+  Ok(())
+}
+
+#[tauri::command]
+fn hide_window(handle: AppHandle) -> Result<(), String> {
+  if let Some(window) = handle.get_window("main") {
+    window
+      .hide()
+      .map_err(|error| format!("Failed to hide window: {error}"))?;
+  }
   Ok(())
 }
 
@@ -237,6 +321,8 @@ fn main() {
       check_windows_permissions,
       register_global_shortcut,
       unregister_global_shortcut,
+      paste_text,
+      hide_window,
       load_setup,
       save_setup,
       load_execution_logs,

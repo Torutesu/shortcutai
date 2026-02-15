@@ -1,5 +1,8 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import { readText as tauriReadClipboardText, writeText as tauriWriteClipboardText } from "@tauri-apps/api/clipboard";
+import {
+  readText as tauriReadClipboardText,
+  writeText as tauriWriteClipboardText,
+} from "@tauri-apps/api/clipboard";
 import type { ExecutionLogEntry } from "../../../shared/core/src";
 
 export interface SetupPayload {
@@ -138,4 +141,151 @@ export async function writeClipboardText(text: string): Promise<void> {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     await navigator.clipboard.writeText(text);
   }
+}
+
+/**
+ * Write `text` to the clipboard and simulate Ctrl+V in the previously-focused
+ * application.  On Tauri, this is handled natively in Rust; in browser preview,
+ * it just copies to clipboard.
+ */
+export async function pasteText(text: string): Promise<void> {
+  if (isTauriRuntime()) {
+    await invoke("paste_text", { text });
+    return;
+  }
+
+  // Browser preview: just write to clipboard as a best-effort.
+  if (typeof navigator !== "undefined" && navigator.clipboard) {
+    await navigator.clipboard.writeText(text);
+  }
+}
+
+/**
+ * Hide the main application window so the target app regains focus before we
+ * simulate Ctrl+V.
+ */
+export async function hideWindow(): Promise<void> {
+  if (isTauriRuntime()) {
+    await invoke("hide_window");
+  }
+}
+
+// ---------------------------------------------------------------------------
+// AI provider integration
+// ---------------------------------------------------------------------------
+
+export type Provider = "OpenAI" | "Anthropic" | "OpenRouter" | "Perplexity" | "Groq";
+
+interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+interface OpenAICompatibleResponse {
+  choices: Array<{ message: { content: string } }>;
+}
+
+interface AnthropicResponse {
+  content: Array<{ type: string; text: string }>;
+}
+
+/** Model IDs used per provider. */
+const DEFAULT_MODELS: Record<Provider, string> = {
+  OpenAI: "gpt-4o-mini",
+  Anthropic: "claude-haiku-4-5-20251001",
+  OpenRouter: "openai/gpt-4o-mini",
+  Perplexity: "llama-3.1-sonar-small-128k-online",
+  Groq: "llama-3.1-8b-instant",
+};
+
+async function callOpenAICompatible(
+  baseUrl: string,
+  apiKey: string,
+  model: string,
+  messages: ChatMessage[],
+  extraHeaders: Record<string, string> = {},
+): Promise<string> {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      ...extraHeaders,
+    },
+    body: JSON.stringify({ model, messages, max_tokens: 2048 }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`${response.status} ${response.statusText}: ${body}`);
+  }
+
+  const data = (await response.json()) as OpenAICompatibleResponse;
+  return data.choices[0]?.message?.content ?? "";
+}
+
+async function callAnthropic(
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  userText: string,
+): Promise<string> {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userText }],
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`${response.status} ${response.statusText}: ${body}`);
+  }
+
+  const data = (await response.json()) as AnthropicResponse;
+  return data.content.find((c) => c.type === "text")?.text ?? "";
+}
+
+/**
+ * Call the configured AI provider with the action prompt and selected text.
+ * Returns the transformed text.
+ */
+export async function callAI(
+  provider: Provider,
+  apiKey: string,
+  actionPrompt: string,
+  selectedText: string,
+): Promise<string> {
+  const model = DEFAULT_MODELS[provider];
+
+  if (provider === "Anthropic") {
+    return callAnthropic(apiKey, model, actionPrompt, selectedText);
+  }
+
+  const baseUrls: Record<Exclude<Provider, "Anthropic">, string> = {
+    OpenAI: "https://api.openai.com/v1",
+    OpenRouter: "https://openrouter.ai/api/v1",
+    Perplexity: "https://api.perplexity.ai",
+    Groq: "https://api.groq.com/openai/v1",
+  };
+
+  const messages: ChatMessage[] = [
+    { role: "system", content: actionPrompt },
+    { role: "user", content: selectedText },
+  ];
+
+  return callOpenAICompatible(
+    baseUrls[provider as Exclude<Provider, "Anthropic">],
+    apiKey,
+    model,
+    messages,
+  );
 }

@@ -13,8 +13,14 @@
   "tauri": {
     "allowlist": {
       "all": false,
-      "shell": {
-        "all": false
+      "event": {
+        "listen": true,
+        "emit": true
+      },
+      "window": {
+        "show": true,
+        "setFocus": true,
+        "unminimize": true
       }
     },
     "bundle": {
