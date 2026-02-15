@@ -20,14 +20,14 @@
 
 ## About
 
-ShortcutAI is a macOS menu bar app that lets you trigger AI-powered text actions with a keyboard shortcut. Select text in any app, press `Cmd+Shift+T`, pick an action — done.
+ShortcutAI is a desktop app (macOS release + Windows preview) that lets you trigger AI-powered text actions with a keyboard shortcut. Select text in any app, press your shortcut, pick an action — done.
 
 Your API key, your model. No subscriptions, no middlemen.
 
 ## Platform Support
 
 - macOS: supported today
-- Windows: planned (see roadmap below)
+- Windows: preview scaffold available in `apps/windows` (Tauri + React)
 
 ## Windows Roadmap
 
@@ -80,6 +80,22 @@ git clone https://github.com/Torutesu/shortcutai.git
 - macOS 13+
 - Xcode 15+
 - An AI provider API key (OpenAI, Anthropic, etc.)
+
+### Windows preview
+
+```bash
+cd apps/windows
+npm install
+npm run dev
+```
+
+To run the desktop preview with Tauri:
+
+```bash
+cd apps/windows
+npm install
+npm run tauri:dev
+```
 
 <br />
 

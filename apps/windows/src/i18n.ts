@@ -1,0 +1,102 @@
+export type AppLanguage = "system" | "english" | "japanese";
+export type LocaleKey = "en" | "ja";
+
+const dictionary = {
+  en: {
+    title: "ShortcutAI for Windows (Preview)",
+    subtitle:
+      "One-screen setup + execution insights scaffold for Windows implementation.",
+    language: "Language",
+    system: "System",
+    english: "English",
+    japanese: "Japanese",
+    step1: "1. Permissions",
+    step1Desc:
+      "Permission checks are scaffolded. Connect real Windows APIs for global shortcut and text capture next.",
+    permissionGranted: "Permission granted",
+    permissionStatus: "Permission status",
+    refreshPermissions: "Re-check permissions",
+    globalShortcut: "Global shortcut",
+    registerShortcut: "Register",
+    unregisterShortcut: "Unregister",
+    shortcutRegistered: "Shortcut is registered.",
+    shortcutUnregistered: "Shortcut is unregistered.",
+    clipboard: "Clipboard",
+    captureClipboard: "Capture clipboard text",
+    copyToClipboard: "Copy test text",
+    clipboardPlaceholder: "Type text to copy to clipboard for testing.",
+    step2: "2. API Key Setup",
+    provider: "Provider",
+    apiKey: "API Key",
+    step3: "3. First Action",
+    actionName: "Action Name",
+    prompt: "Prompt",
+    finishSetup: "Finish Setup",
+    setupDone: "Setup completed. Data saved locally.",
+    setupSaved: "Saved",
+    insights: "Execution Insights",
+    runSuccess: "Simulate Success Run",
+    runFailure: "Simulate Failure Run",
+    noLogs: "No execution logs yet.",
+    successRate: "Success",
+    avgLatency: "Avg",
+    runs: "Runs",
+    topFailures: "Top failures",
+    suggestion: "Auto Prompt Suggestion",
+    applySuggestion: "Apply Suggestion",
+  },
+  ja: {
+    title: "ShortcutAI for Windows（プレビュー）",
+    subtitle:
+      "Windows実装向けに、1画面セットアップと実行インサイトの土台を追加。",
+    language: "言語",
+    system: "システム",
+    english: "英語",
+    japanese: "日本語",
+    step1: "1. 権限",
+    step1Desc:
+      "権限チェックはスケルトンです。次にグローバルショートカットとテキスト取得のOS APIを接続します。",
+    permissionGranted: "権限チェック完了",
+    permissionStatus: "権限状態",
+    refreshPermissions: "権限を再チェック",
+    globalShortcut: "グローバルショートカット",
+    registerShortcut: "登録",
+    unregisterShortcut: "解除",
+    shortcutRegistered: "ショートカットを登録済みです。",
+    shortcutUnregistered: "ショートカットは未登録です。",
+    clipboard: "クリップボード",
+    captureClipboard: "クリップボードを取得",
+    copyToClipboard: "テスト文をコピー",
+    clipboardPlaceholder: "テスト用にクリップボードへコピーする文字列を入力",
+    step2: "2. APIキー設定",
+    provider: "プロバイダー",
+    apiKey: "APIキー",
+    step3: "3. 最初のアクション",
+    actionName: "アクション名",
+    prompt: "プロンプト",
+    finishSetup: "セットアップを完了",
+    setupDone: "セットアップ完了。データをローカル保存しました。",
+    setupSaved: "保存済み",
+    insights: "実行インサイト",
+    runSuccess: "成功実行をシミュレート",
+    runFailure: "失敗実行をシミュレート",
+    noLogs: "実行ログはまだありません。",
+    successRate: "成功率",
+    avgLatency: "平均",
+    runs: "実行回数",
+    topFailures: "主な失敗",
+    suggestion: "自動プロンプト提案",
+    applySuggestion: "提案を適用",
+  },
+} as const;
+
+function resolveLocale(language: AppLanguage): LocaleKey {
+  if (language === "english") return "en";
+  if (language === "japanese") return "ja";
+  return navigator.language.toLowerCase().startsWith("ja") ? "ja" : "en";
+}
+
+export function t(language: AppLanguage, key: keyof (typeof dictionary)["en"]): string {
+  const locale = resolveLocale(language);
+  return dictionary[locale][key];
+}

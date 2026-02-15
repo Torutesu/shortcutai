@@ -2,7 +2,7 @@
 
 ## Current Status
 
-- Desktop support: macOS only
+- Desktop support: macOS + Windows preview scaffold
 - Core experience: global shortcut, selected text capture, AI actions, plugins
 
 ## Near-Term Priorities

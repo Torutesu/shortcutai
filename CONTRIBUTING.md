@@ -21,11 +21,11 @@ Good first issues are a great way to start contributing and get familiar with th
    git checkout -b your-branch-name
    ```
 
-4. **Set up the project:** Follow the [Getting Started](README.md#getting-started) guide to get the app running locally. You'll need to create your own `Secrets.swift` from the template.
+4. **Set up the project:** Follow the [Getting Started](README.md#getting-started) guide for macOS, or use the Windows preview app in `apps/windows`.
 
-5. **Make Changes:** Make your desired changes and ensure your code builds without errors in Xcode.
+5. **Make Changes:** Make your desired changes and ensure your target app builds without errors (`Xcode` for macOS, `npm run build` for Windows preview).
 
-6. **Test Locally:** Run the app and verify your changes work as expected.
+6. **Test Locally:** Run the app and verify your changes work as expected on your target platform.
 
 7. **Commit Changes:**
    ```bash
@@ -45,4 +45,4 @@ Good first issues are a great way to start contributing and get familiar with th
 
 ## Reporting Issues
 
-If you find a bug or have a suggestion, feel free to [create an issue](https://github.com/Torutesu/shortcutai/issues). Please include steps to reproduce the problem and your macOS version.
+If you find a bug or have a suggestion, feel free to [create an issue](https://github.com/Torutesu/shortcutai/issues). Please include steps to reproduce the problem and your OS version (macOS or Windows).

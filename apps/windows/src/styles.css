@@ -1,0 +1,184 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", "Yu Gothic UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at top right, #e5f0ff 0%, #f7f9fc 55%, #ffffff 100%);
+  color: #10213d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+.panel {
+  max-width: 860px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d5dff0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 30px rgba(30, 62, 122, 0.08);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.header p {
+  margin: 8px 0 0;
+  color: #4a5b79;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #d5dff0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 28px rgba(25, 53, 105, 0.08);
+}
+
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+
+.card p {
+  margin: 6px 0;
+  color: #3f5270;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.top-gap {
+  margin-top: 12px;
+}
+
+label {
+  font-size: 0.9rem;
+  color: #334a70;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid #c3d1e9;
+  border-radius: 10px;
+  padding: 10px;
+  background: #ffffff;
+  color: #10213d;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #1f66ff;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.row.buttons {
+  margin-top: 10px;
+}
+
+.checkbox {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: #223b64;
+}
+
+.checkbox input {
+  width: auto;
+}
+
+.ok {
+  color: #0e8345;
+  font-weight: 600;
+}
+
+.muted {
+  color: #4f627f;
+}
+
+.warning {
+  color: #8a4a00;
+}
+
+.mono {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  color: #173865;
+  background: #f3f7ff;
+  border: 1px solid #d7e2f7;
+  border-radius: 8px;
+  padding: 8px;
+  white-space: pre-wrap;
+}
+
+.suggestion {
+  margin-top: 12px;
+  border: 1px solid #b9d3ff;
+  border-radius: 12px;
+  padding: 12px;
+  background: #edf4ff;
+}
+
+.suggestion h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 14px;
+  }
+
+  .panel {
+    gap: 12px;
+  }
+}
