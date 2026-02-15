@@ -128,7 +128,8 @@ final class ExecutionLogStore: ObservableObject {
         let successRatePercent = Int((stats.successRate * 100).rounded())
 
         if stats.successRate < 0.7 {
-            let summary = "Success rate is \(successRatePercent)% across \(stats.totalRuns) runs. Clarify output constraints and fallback behavior."
+            let format = String(localized: "Success rate summary format")
+            let summary = String(format: format, successRatePercent, stats.totalRuns)
             return PromptAutoSuggestion(
                 summary: summary,
                 suggestedPrompt: buildReliablePrompt(from: action.prompt, failureReasons: stats.topFailureReasons)
@@ -136,7 +137,8 @@ final class ExecutionLogStore: ObservableObject {
         }
 
         if stats.averageDurationMs > 10_000 {
-            let summary = "Average response time is \(Int(stats.averageDurationMs.rounded()))ms. Tighten scope for faster responses."
+            let format = String(localized: "Average response summary format")
+            let summary = String(format: format, Int(stats.averageDurationMs.rounded()))
             return PromptAutoSuggestion(
                 summary: summary,
                 suggestedPrompt: buildFastPrompt(from: action.prompt)
@@ -149,18 +151,18 @@ final class ExecutionLogStore: ObservableObject {
     private func normalizedFailureReason(_ message: String?) -> String {
         let raw = (message ?? "Unknown failure").lowercased()
         if raw.contains("no text selected") {
-            return "No input text was selected."
+            return String(localized: "No input text was selected.")
         }
         if raw.contains("api key") {
-            return "API key was missing or invalid."
+            return String(localized: "API key was missing or invalid.")
         }
         if raw.contains("timeout") {
-            return "The request timed out."
+            return String(localized: "The request timed out.")
         }
         if raw.contains("network") {
-            return "Network issue during request."
+            return String(localized: "Network issue during request.")
         }
-        return message ?? "Unknown failure."
+        return message ?? String(localized: "Unknown failure.")
     }
 
     private func buildReliablePrompt(from prompt: String, failureReasons: [String]) -> String {
@@ -201,4 +203,3 @@ final class ExecutionLogStore: ObservableObject {
         try? data.write(to: logFileURL, options: .atomic)
     }
 }
-

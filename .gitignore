@@ -33,3 +33,10 @@ Pods/
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# JS / Windows app
+node_modules/
+apps/windows/node_modules/
+apps/windows/dist/
+apps/windows/src-tauri/target/
+shared/core/dist/

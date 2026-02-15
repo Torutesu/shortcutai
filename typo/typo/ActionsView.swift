@@ -390,16 +390,23 @@ struct ActionEditorView: View {
 
                         if let stats = executionLogStore.stats(for: action.id) {
                             VStack(alignment: .leading, spacing: 8) {
+                                let statsSummary = String(
+                                    format: String(localized: "Execution stats format"),
+                                    Int((stats.successRate * 100).rounded()),
+                                    Int(stats.averageDurationMs.rounded()),
+                                    stats.totalRuns
+                                )
+
                                 Text("Execution Insights")
                                     .font(.nunitoBold(size: 13))
                                     .foregroundColor(.primary)
 
-                                Text("Success \(Int((stats.successRate * 100).rounded()))% • Avg \(Int(stats.averageDurationMs.rounded()))ms • Runs \(stats.totalRuns)")
+                                Text(statsSummary)
                                     .font(.system(size: 12))
                                     .foregroundColor(.secondary)
 
                                 if !stats.topFailureReasons.isEmpty {
-                                    Text("Top failures: \(stats.topFailureReasons.joined(separator: " / "))")
+                                    Text(String(format: String(localized: "Top failures: %@"), stats.topFailureReasons.joined(separator: " / ")))
                                         .font(.system(size: 11))
                                         .foregroundColor(.secondary)
                                         .lineLimit(2)

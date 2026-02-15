@@ -288,7 +288,7 @@ struct GeneralSettingsView: View {
 
                         Picker("", selection: $appLanguageRaw) {
                             ForEach(AppLanguage.allCases) { language in
-                                Text(language.displayKey)
+                                Text(LocalizedStringKey(language.displayKey))
                                     .tag(language.rawValue)
                             }
                         }

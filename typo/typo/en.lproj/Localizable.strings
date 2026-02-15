@@ -1,0 +1,34 @@
+"System" = "System";
+"English" = "English";
+"Japanese" = "Japanese";
+"Language" = "Language";
+
+"Setup ShortcutAI" = "Setup ShortcutAI";
+"Complete onboarding in one screen." = "Complete onboarding in one screen.";
+"Accessibility Check" = "Accessibility Check";
+"Permission granted." = "Permission granted.";
+"Grant accessibility to enable global shortcuts." = "Grant accessibility to enable global shortcuts.";
+"Refresh Status" = "Refresh Status";
+"API Key Setup" = "API Key Setup";
+"Pick a provider and add your API key." = "Pick a provider and add your API key.";
+"Provider" = "Provider";
+"Create Your First Action" = "Create Your First Action";
+"Define one action you can run right away." = "Define one action you can run right away.";
+"Action Name (e.g. Rewrite politely)" = "Action Name (e.g. Rewrite politely)";
+"Prompt (e.g. Rewrite the text clearly and return only the rewritten text.)" = "Prompt (e.g. Rewrite the text clearly and return only the rewritten text.)";
+"Finish Setup" = "Finish Setup";
+"Granted" = "Granted";
+"Not Granted" = "Not Granted";
+
+"Execution Insights" = "Execution Insights";
+"Execution stats format" = "Success %d%% • Avg %dms • Runs %d";
+"Auto Prompt Suggestion" = "Auto Prompt Suggestion";
+"Apply Suggestion" = "Apply Suggestion";
+"Top failures: %@" = "Top failures: %@";
+"Success rate summary format" = "Success rate is %d%% across %d runs. Clarify output constraints and fallback behavior.";
+"Average response summary format" = "Average response time is %dms. Tighten scope for faster responses.";
+"No input text was selected." = "No input text was selected.";
+"API key was missing or invalid." = "API key was missing or invalid.";
+"The request timed out." = "The request timed out.";
+"Network issue during request." = "Network issue during request.";
+"Unknown failure." = "Unknown failure.";

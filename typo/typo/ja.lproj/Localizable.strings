@@ -129,3 +129,38 @@
 "Contact Support" = "サポートに連絡";
 "Get help from our team" = "チームによるサポート";
 "Contact" = "連絡";
+
+"Language" = "言語";
+"System" = "システム";
+"English" = "英語";
+"Japanese" = "日本語";
+
+"Setup ShortcutAI" = "ShortcutAIのセットアップ";
+"Complete onboarding in one screen." = "1画面で初期設定を完了します。";
+"Accessibility Check" = "アクセシビリティ確認";
+"Permission granted." = "権限は許可済みです。";
+"Grant accessibility to enable global shortcuts." = "グローバルショートカットのためにアクセシビリティ権限を許可してください。";
+"Refresh Status" = "状態を更新";
+"API Key Setup" = "APIキー設定";
+"Pick a provider and add your API key." = "プロバイダーを選んでAPIキーを追加します。";
+"Provider" = "プロバイダー";
+"Create Your First Action" = "最初のアクションを作成";
+"Define one action you can run right away." = "すぐ使えるアクションを1つ定義します。";
+"Action Name (e.g. Rewrite politely)" = "アクション名（例: 丁寧に書き直す）";
+"Prompt (e.g. Rewrite the text clearly and return only the rewritten text.)" = "プロンプト（例: 文章を明確に書き直し、書き直した文のみ返す）";
+"Finish Setup" = "セットアップを完了";
+"Granted" = "許可済み";
+"Not Granted" = "未許可";
+
+"Execution Insights" = "実行インサイト";
+"Execution stats format" = "成功 %d%% • 平均 %dms • 実行回数 %d";
+"Auto Prompt Suggestion" = "自動プロンプト提案";
+"Apply Suggestion" = "提案を適用";
+"Top failures: %@" = "主な失敗: %@";
+"Success rate summary format" = "成功率は %d%%（%d 回実行）です。出力条件と失敗時の挙動を明確化しましょう。";
+"Average response summary format" = "平均応答時間は %dms です。スコープを絞ると高速化できます。";
+"No input text was selected." = "入力テキストが選択されていません。";
+"API key was missing or invalid." = "APIキーが未設定、または無効です。";
+"The request timed out." = "リクエストがタイムアウトしました。";
+"Network issue during request." = "リクエスト中にネットワークエラーが発生しました。";
+"Unknown failure." = "不明な失敗です。";

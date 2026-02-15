@@ -55,7 +55,7 @@ struct SetupWizardView: View {
                             HStack {
                                 PermissionPill(text: hasAccessibilityPermission ? "Granted" : "Not Granted", isGranted: hasAccessibilityPermission)
                                 Spacer()
-                                Button("Refresh Status") {
+                                Button(String(localized: "Refresh Status")) {
                                     hasAccessibilityPermission = AXIsProcessTrusted()
                                 }
                                 .buttonStyle(.plain)
@@ -66,7 +66,7 @@ struct SetupWizardView: View {
                                         .fill(Color.gray.opacity(0.12))
                                 )
 
-                                Button("Open Settings") {
+                                Button(String(localized: "Open Settings")) {
                                     openAccessibilitySettings()
                                 }
                                 .buttonStyle(.plain)
@@ -229,10 +229,10 @@ struct SetupWizardView: View {
                     )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
+                    Text(LocalizedStringKey(title))
                         .font(.nunitoBold(size: 16))
                         .foregroundColor(.primary)
-                    Text(subtitle)
+                    Text(LocalizedStringKey(subtitle))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
@@ -260,7 +260,7 @@ private struct PermissionPill: View {
         HStack(spacing: 6) {
             Image(systemName: isGranted ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .font(.system(size: 11))
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .font(.system(size: 11, weight: .semibold))
         }
         .foregroundColor(isGranted ? Color(hex: "137333") : Color(hex: "A31515"))
@@ -272,4 +272,3 @@ private struct PermissionPill: View {
         )
     }
 }
-

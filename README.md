@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="screenshots/logo.png" width="80" alt="ShortcutAI logo">
+  <img src="screenshots/shortcutai-logo.svg" width="96" alt="ShortcutAI logo">
 </p>
 
 <h1 align="center">ShortcutAI</h1>
@@ -7,7 +7,7 @@
 <p align="center">Turn any AI task into a keyboard shortcut.</p>
 
 <p align="center">
-  <a href="https://textab.me">Website</a> · <a href="https://github.com/Torutesu/shortcutai/issues">Issues</a> · <a href="https://x.com/elmoidev">Twitter</a>
+  <a href="https://github.com/Torutesu/shortcutai">Repository</a> · <a href="https://github.com/Torutesu/shortcutai/issues">Issues</a> · <a href="https://github.com/Torutesu/shortcutai/discussions">Discussions</a>
 </p>
 
 <br />
@@ -23,6 +23,18 @@
 ShortcutAI is a macOS menu bar app that lets you trigger AI-powered text actions with a keyboard shortcut. Select text in any app, press `Cmd+Shift+T`, pick an action — done.
 
 Your API key, your model. No subscriptions, no middlemen.
+
+## Platform Support
+
+- macOS: supported today
+- Windows: planned (see roadmap below)
+
+## Windows Roadmap
+
+1. Split platform-agnostic logic (AI actions, prompt engine, logs) into a shared core module.
+2. Build a Windows client (recommended: Tauri + React or .NET MAUI) using the same core behavior.
+3. Implement Windows global shortcut + selected text capture + safe paste flow.
+4. Ship public beta, then parity release with macOS core features.
 
 <br />
 

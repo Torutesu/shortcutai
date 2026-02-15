@@ -10,7 +10,7 @@ Found something broken? Please [open an issue](https://github.com/Torutesu/short
 
 ## Reporting a Security Concern
 
-If you find something security-related (like API keys being mishandled or data being sent somewhere it shouldn't), please DM me on [X (@elmoidev)](https://x.com/elmoidev) instead of opening a public issue.
+If you find something security-related (like API keys being mishandled or data being sent somewhere it shouldn't), please open a private security report through the repository's Security tab instead of opening a public issue.
 
 - You'll get a response within a few days.
 - Your report stays confidential.
