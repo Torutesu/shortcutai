@@ -14,7 +14,7 @@ struct MenuBarMenuView: View {
     @State private var isVisible = false
     @State private var hoveredItem: String? = nil
 
-    var onOpenTexTab: () -> Void
+    var onOpenShortcutAI: () -> Void
     var onSettings: () -> Void
     var onQuit: () -> Void
     var onDismiss: () -> Void
@@ -39,12 +39,12 @@ struct MenuBarMenuView: View {
             VStack(spacing: 2) {
                 MenuBarMenuItemWithAsset(
                     assetName: "MenuBarIcon",
-                    title: "Open TexTab",
+                    title: "Open ShortcutAI",
                     isHovered: hoveredItem == "open",
                     isDarkMode: isDarkMode,
                     delay: 0.05
                 ) {
-                    onOpenTexTab()
+                    onOpenShortcutAI()
                 }
                 .onHover { hovering in
                     hoveredItem = hovering ? "open" : nil
@@ -160,7 +160,7 @@ struct MenuBarMenuItem: View {
                     .foregroundColor(iconColor)
                     .frame(width: 18)
 
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(textColor)
 
@@ -231,7 +231,7 @@ struct MenuBarMenuItemWithAsset: View {
                     .foregroundColor(iconColor)
                     .frame(width: 18)
 
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(textColor)
 
@@ -261,7 +261,7 @@ class MenuBarMenuWindowController: NSObject {
     private var menuWindow: NSWindow?
     private var eventMonitor: Any?
 
-    func showMenu(relativeTo statusItem: NSStatusItem, onOpenTexTab: @escaping () -> Void, onSettings: @escaping () -> Void, onQuit: @escaping () -> Void) {
+    func showMenu(relativeTo statusItem: NSStatusItem, onOpenShortcutAI: @escaping () -> Void, onSettings: @escaping () -> Void, onQuit: @escaping () -> Void) {
         guard let button = statusItem.button else { return }
 
         // Close existing menu if any
@@ -274,9 +274,9 @@ class MenuBarMenuWindowController: NSObject {
 
         // Create the menu view
         let menuView = MenuBarMenuView(
-            onOpenTexTab: { [weak self] in
+            onOpenShortcutAI: { [weak self] in
                 self?.closeMenu()
-                onOpenTexTab()
+                onOpenShortcutAI()
             },
             onSettings: { [weak self] in
                 self?.closeMenu()

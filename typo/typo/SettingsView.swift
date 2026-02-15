@@ -146,7 +146,7 @@ struct TabTextButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.nunitoBold(size: 14))
                 .foregroundColor(isSelected ? Color(red: 0.0, green: 0.584, blue: 1.0) : .secondary)
         }

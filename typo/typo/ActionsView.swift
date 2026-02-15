@@ -203,6 +203,7 @@ struct ActionListRow: View {
 
 struct ActionEditorView: View {
     @Environment(\.colorScheme) var colorScheme
+    @StateObject private var executionLogStore = ExecutionLogStore.shared
     @State var action: Action
     var onSave: (Action) -> Void
     var onDelete: () -> Void
@@ -387,6 +388,73 @@ struct ActionEditorView: View {
                                 .stroke(Color.gray.opacity(0.15), lineWidth: 1)
                         )
 
+                        if let stats = executionLogStore.stats(for: action.id) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Execution Insights")
+                                    .font(.nunitoBold(size: 13))
+                                    .foregroundColor(.primary)
+
+                                Text("Success \(Int((stats.successRate * 100).rounded()))% • Avg \(Int(stats.averageDurationMs.rounded()))ms • Runs \(stats.totalRuns)")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+
+                                if !stats.topFailureReasons.isEmpty {
+                                    Text("Top failures: \(stats.topFailureReasons.joined(separator: " / "))")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(2)
+                                }
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(inputBackgroundColor)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+                            )
+                        }
+
+                        if let suggestion = executionLogStore.autoSuggestion(for: action) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Auto Prompt Suggestion")
+                                    .font(.nunitoBold(size: 13))
+                                    .foregroundColor(.primary)
+
+                                Text(suggestion.summary)
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+
+                                if let suggestedPrompt = suggestion.suggestedPrompt {
+                                    Button(action: {
+                                        action.prompt = suggestedPrompt
+                                        hasUnsavedChanges = true
+                                    }) {
+                                        Text("Apply Suggestion")
+                                            .font(.system(size: 12, weight: .semibold))
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 7)
+                                            .background(
+                                                Capsule()
+                                                    .fill(Color(red: 0.0, green: 0.584, blue: 1.0))
+                                            )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(inputBackgroundColor)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.blue.opacity(0.22), lineWidth: 1)
+                            )
+                        }
+
                     }
                 }
                 .padding(24)
@@ -568,7 +636,7 @@ struct ActionEditorView: View {
                     // Determine conflict name
                     var conflictName: String? = nil
                     if isMainHotkeyConflict {
-                        conflictName = "Open TexTab"
+                        conflictName = String(localized: "Open ShortcutAI")
                     } else if let conflict = conflictingAction {
                         conflictName = conflict.name
                     }
@@ -614,7 +682,7 @@ struct ActionEditorView: View {
             hasUnsavedChanges = false
         }
         // Show saved notification
-        CopyNotificationWindow.show(message: "Action saved", icon: "checkmark")
+        CopyNotificationWindow.show(message: String(localized: "Action saved"), icon: "checkmark")
     }
 
     func improvePromptWithAI() {

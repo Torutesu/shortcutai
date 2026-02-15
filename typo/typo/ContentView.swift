@@ -14,7 +14,7 @@ struct ContentView: View {
                 .font(.system(size: 60))
                 .foregroundColor(.accentColor)
 
-            Text("TexTab is running")
+            Text("ShortcutAI is running")
                 .font(.title2.bold())
 
             Text("Press ⌘ + ⇧ + Space to open")

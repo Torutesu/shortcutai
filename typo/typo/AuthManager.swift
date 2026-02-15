@@ -2,7 +2,7 @@
 //  AuthManager.swift
 //  typo
 //
-//  Authentication manager for TexTab using Supabase
+//  Authentication manager for ShortcutAI using Supabase
 //
 
 import Foundation

@@ -19,7 +19,8 @@ class UpdateChecker: ObservableObject {
     @Published var errorMessage: String?
 
     // GitHub API URL for latest release
-    private let githubReleasesURL = "https://api.github.com/repos/ELPROFUG0/TexTab/releases/latest"
+    private let githubReleasesURL = "https://api.github.com/repos/Torutesu/shortcutai/releases/latest"
+    private let fallbackDownloadPageURL = "https://github.com/Torutesu/shortcutai/releases/latest"
 
     // Current app version from bundle
     var currentVersion: String {
@@ -86,8 +87,12 @@ class UpdateChecker: ObservableObject {
     }
 
     func openDownloadPage() {
-        // Always open the website download page
-        if let url = URL(string: "https://textab.me/download") {
+        if let downloadURL, let url = URL(string: downloadURL) {
+            NSWorkspace.shared.open(url)
+            return
+        }
+
+        if let url = URL(string: fallbackDownloadPageURL) {
             NSWorkspace.shared.open(url)
         }
     }

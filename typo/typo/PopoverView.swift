@@ -164,7 +164,7 @@ struct PopoverView: View {
                 .font(.nunitoBold(size: 20))
                 .foregroundColor(.primary)
 
-            Text("Please sign in to use TexTab")
+            Text("Please sign in to use ShortcutAI")
                 .font(.nunitoRegularBold(size: 14))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -1187,6 +1187,7 @@ struct PopoverView: View {
             return
         }
 
+        let startedAt = Date()
         let textToProcess = textManager.capturedText
 
         // Check if plugin requires image input
@@ -1216,6 +1217,16 @@ struct PopoverView: View {
                             // Re-open popup with result
                             self.resultText = text
                             self.isProcessing = false
+                            self.recordExecution(
+                                action: action,
+                                startedAt: startedAt,
+                                input: textToProcess,
+                                output: text,
+                                success: true,
+                                errorMessage: nil,
+                                providerOverride: nil,
+                                modelOverride: nil
+                            )
                             // Post notification to reopen with result
                             NotificationCenter.default.post(
                                 name: NSNotification.Name("ShowColorPickerResult"),
@@ -1225,6 +1236,16 @@ struct PopoverView: View {
                         case .error(let error):
                             self.resultText = "Error: \(error)"
                             self.isProcessing = false
+                            self.recordExecution(
+                                action: action,
+                                startedAt: startedAt,
+                                input: textToProcess,
+                                output: nil,
+                                success: false,
+                                errorMessage: "Error: \(error)",
+                                providerOverride: nil,
+                                modelOverride: nil
+                            )
                         default:
                             break
                         }
@@ -1240,6 +1261,16 @@ struct PopoverView: View {
         guard !textToProcess.isEmpty || !needsInput else {
             resultText = "No text selected. Select some text first!"
             activeAction = action
+            recordExecution(
+                action: action,
+                startedAt: startedAt,
+                input: textToProcess,
+                output: nil,
+                success: false,
+                errorMessage: "No text selected. Select some text first!",
+                providerOverride: nil,
+                modelOverride: nil
+            )
             return
         }
 
@@ -1261,12 +1292,42 @@ struct PopoverView: View {
                 switch pluginResult {
                 case .text(let text):
                     resultText = text
+                    recordExecution(
+                        action: action,
+                        startedAt: startedAt,
+                        input: textToProcess,
+                        output: text,
+                        success: true,
+                        errorMessage: nil,
+                        providerOverride: nil,
+                        modelOverride: nil
+                    )
                 case .image(let image):
                     resultImage = image
+                    recordExecution(
+                        action: action,
+                        startedAt: startedAt,
+                        input: textToProcess,
+                        output: "[image]",
+                        success: true,
+                        errorMessage: nil,
+                        providerOverride: nil,
+                        modelOverride: nil
+                    )
                 case .imageData(_, _):
                     break // Handled separately
                 case .error(let error):
                     resultText = "Error: \(error)"
+                    recordExecution(
+                        action: action,
+                        startedAt: startedAt,
+                        input: textToProcess,
+                        output: nil,
+                        success: false,
+                        errorMessage: "Error: \(error)",
+                        providerOverride: nil,
+                        modelOverride: nil
+                    )
                 }
                 isProcessing = false
             }
@@ -1279,6 +1340,8 @@ struct PopoverView: View {
                 let result: String
                 // Auto-detect if prompt requires web search
                 let requiresWebSearch = promptRequiresWebSearch(action.prompt)
+                let providerForLog = requiresWebSearch ? AIProvider.perplexity.rawValue : store.selectedProvider.rawValue
+                let modelForLog = requiresWebSearch ? "web-search" : store.selectedModel.id
 
                 if requiresWebSearch {
                     // Use Perplexity for web search
@@ -1300,14 +1363,60 @@ struct PopoverView: View {
                 await MainActor.run {
                     resultText = result
                     isProcessing = false
+                    recordExecution(
+                        action: action,
+                        startedAt: startedAt,
+                        input: textToProcess,
+                        output: result,
+                        success: true,
+                        errorMessage: nil,
+                        providerOverride: providerForLog,
+                        modelOverride: modelForLog
+                    )
                 }
             } catch {
                 await MainActor.run {
                     resultText = "Error: \(error.localizedDescription)"
                     isProcessing = false
+                    recordExecution(
+                        action: action,
+                        startedAt: startedAt,
+                        input: textToProcess,
+                        output: nil,
+                        success: false,
+                        errorMessage: "Error: \(error.localizedDescription)",
+                        providerOverride: store.selectedProvider.rawValue,
+                        modelOverride: store.selectedModel.id
+                    )
                 }
             }
         }
+    }
+
+    private func recordExecution(
+        action: Action,
+        startedAt: Date,
+        input: String,
+        output: String?,
+        success: Bool,
+        errorMessage: String?,
+        providerOverride: String?,
+        modelOverride: String?
+    ) {
+        let provider = action.isPlugin ? nil : (providerOverride ?? store.selectedProvider.rawValue)
+        let model = action.isPlugin ? nil : (modelOverride ?? store.selectedModel.id)
+
+        ExecutionLogStore.shared.record(
+            action: action,
+            prompt: action.prompt,
+            provider: provider,
+            modelId: model,
+            startedAt: startedAt,
+            input: input,
+            output: output,
+            success: success,
+            errorMessage: errorMessage
+        )
     }
 
     func copyToClipboard(_ text: String) {

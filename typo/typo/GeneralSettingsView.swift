@@ -30,6 +30,7 @@ struct GeneralSettingsView: View {
     @State private var selectedProvider: AIProvider = .openai
     @State private var selectedModelId: String = ""
     @AppStorage("appTheme") private var appThemeString: String = "System"
+    @AppStorage(AppLanguage.storageKey) private var appLanguageRaw: String = AppLanguage.system.rawValue
     @State private var showModelTooltip: Bool = false
     @State private var isRecordingMainShortcut = false
     @State private var mainRecordedKeys: [String] = []
@@ -272,6 +273,28 @@ struct GeneralSettingsView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .fill(Color.gray.opacity(0.1))
                         )
+                    }
+
+                    HStack {
+                        HStack(spacing: 10) {
+                            Image(systemName: "globe")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.blue)
+                            Text("Language")
+                                .font(.nunitoRegularBold(size: 15))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+
+                        Picker("", selection: $appLanguageRaw) {
+                            ForEach(AppLanguage.allCases) { language in
+                                Text(language.displayKey)
+                                    .tag(language.rawValue)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .frame(width: 280)
                     }
                 }
 

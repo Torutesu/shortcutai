@@ -51,7 +51,7 @@ struct FeaturesStep: View {
                 // Content centered
                 VStack(spacing: 40) {
                     VStack(spacing: 20) {
-                        Text("How to open TexTab")
+                        Text("How to open ShortcutAI")
                             .font(.custom("Nunito-Black", size: 32))
                             .foregroundColor(.white)
                             .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 3)

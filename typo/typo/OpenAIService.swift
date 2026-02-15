@@ -272,7 +272,7 @@ class AIService {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if provider == .openrouter {
-            request.addValue("TexTab App", forHTTPHeaderField: "X-Title")
+            request.addValue("ShortcutAI App", forHTTPHeaderField: "X-Title")
         }
 
         // Convert messages to API format
@@ -429,7 +429,7 @@ class AIService {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if provider == .openrouter {
-            request.addValue("TexTab App", forHTTPHeaderField: "X-Title")
+            request.addValue("ShortcutAI App", forHTTPHeaderField: "X-Title")
         }
 
         // Convert messages to API format
@@ -591,7 +591,7 @@ class AIService {
 
         // OpenRouter requiere headers adicionales
         if provider == .openrouter {
-            request.addValue("TexTab App", forHTTPHeaderField: "X-Title")
+            request.addValue("ShortcutAI App", forHTTPHeaderField: "X-Title")
         }
 
         let body: [String: Any] = [

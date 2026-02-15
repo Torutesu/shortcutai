@@ -318,7 +318,7 @@ struct AboutView: View {
                         Spacer()
 
                         Button(action: {
-                            if let url = URL(string: "https://typo.app/support") {
+                            if let url = URL(string: "https://github.com/Torutesu/shortcutai/issues") {
                                 NSWorkspace.shared.open(url)
                             }
                         }) {

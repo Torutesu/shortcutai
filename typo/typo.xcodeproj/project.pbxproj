@@ -198,6 +198,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ja,
 			);
 			mainGroup = 409C5B082F23E0F90088B219;
 			minimizedProjectReferenceProxies = 1;
@@ -412,7 +413,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = typo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = TexTab;
+				INFOPLIST_KEY_CFBundleDisplayName = ShortcutAI;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -446,7 +447,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = typo/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = TexTab;
+				INFOPLIST_KEY_CFBundleDisplayName = ShortcutAI;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

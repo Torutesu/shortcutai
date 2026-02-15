@@ -2,7 +2,7 @@
 //  ChatView.swift
 //  typo
 //
-//  AI Chat interface for TexTab
+//  AI Chat interface for ShortcutAI
 //
 
 import SwiftUI

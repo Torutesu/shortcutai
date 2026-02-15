@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="screenshots/logo.png" width="80" alt="TexTab logo">
+  <img src="screenshots/logo.png" width="80" alt="ShortcutAI logo">
 </p>
 
-<h1 align="center">TexTab</h1>
+<h1 align="center">ShortcutAI</h1>
 
 <p align="center">Turn any AI task into a keyboard shortcut.</p>
 
 <p align="center">
-  <a href="https://textab.me">Website</a> · <a href="https://github.com/ELPROFUG0/TexTab/issues">Issues</a> · <a href="https://x.com/elmoidev">Twitter</a>
+  <a href="https://textab.me">Website</a> · <a href="https://github.com/Torutesu/shortcutai/issues">Issues</a> · <a href="https://x.com/elmoidev">Twitter</a>
 </p>
 
 <br />
@@ -20,7 +20,7 @@
 
 ## About
 
-TexTab is a macOS menu bar app that lets you trigger AI-powered text actions with a keyboard shortcut. Select text in any app, press `Cmd+Shift+T`, pick an action — done.
+ShortcutAI is a macOS menu bar app that lets you trigger AI-powered text actions with a keyboard shortcut. Select text in any app, press `Cmd+Shift+T`, pick an action — done.
 
 Your API key, your model. No subscriptions, no middlemen.
 
@@ -51,7 +51,7 @@ Your API key, your model. No subscriptions, no middlemen.
 ## Getting started
 
 ```bash
-git clone https://github.com/ELPROFUG0/TexTab.git
+git clone https://github.com/Torutesu/shortcutai.git
 ```
 
 1. Open `typo/typo.xcodeproj` in Xcode

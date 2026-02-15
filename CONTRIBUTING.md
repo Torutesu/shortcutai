@@ -1,10 +1,10 @@
-# Contributing to TexTab
+# Contributing to ShortcutAI
 
-Thanks for considering contributing to TexTab!
+Thanks for considering contributing to ShortcutAI!
 
 ## Good first issues
 
-Good first issues are a great way to start contributing and get familiar with the codebase. You can find them by filtering on the [good first issue](https://github.com/ELPROFUG0/TexTab/labels/good%20first%20issue) label.
+Good first issues are a great way to start contributing and get familiar with the codebase. You can find them by filtering on the [good first issue](https://github.com/Torutesu/shortcutai/labels/good%20first%20issue) label.
 
 ## How to Contribute
 
@@ -12,8 +12,8 @@ Good first issues are a great way to start contributing and get familiar with th
 
 2. **Clone the Repository:**
    ```bash
-   git clone https://github.com/yourusername/TexTab.git
-   cd TexTab
+   git clone https://github.com/yourusername/ShortcutAI.git
+   cd ShortcutAI
    ```
 
 3. **Create a New Branch:**
@@ -37,7 +37,7 @@ Good first issues are a great way to start contributing and get familiar with th
    git push origin your-branch-name
    ```
 
-9. **Create a Pull Request:** Go to the original TexTab repository and create a pull request. Please provide a clear description of what you changed and why.
+9. **Create a Pull Request:** Go to the original ShortcutAI repository and create a pull request. Please provide a clear description of what you changed and why.
 
 10. **Code Review:** Your pull request will undergo a code review.
 
@@ -45,4 +45,4 @@ Good first issues are a great way to start contributing and get familiar with th
 
 ## Reporting Issues
 
-If you find a bug or have a suggestion, feel free to [create an issue](https://github.com/ELPROFUG0/TexTab/issues). Please include steps to reproduce the problem and your macOS version.
+If you find a bug or have a suggestion, feel free to [create an issue](https://github.com/Torutesu/shortcutai/issues). Please include steps to reproduce the problem and your macOS version.

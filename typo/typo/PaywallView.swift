@@ -2,7 +2,7 @@
 //  PaywallView.swift
 //  typo
 //
-//  Paywall modal for TexTab Pro upgrade
+//  Paywall modal for ShortcutAI Pro upgrade
 //
 
 import SwiftUI
@@ -77,7 +77,7 @@ struct PaywallView: View {
             // Features list
             VStack(alignment: .leading, spacing: 10) {
                 PaywallCheckItem(text: "Unlimited actions")
-                PaywallCheckItem(text: "All TexTab features")
+                PaywallCheckItem(text: "All ShortcutAI features")
                 PaywallCheckItem(text: "Priority support")
                 PaywallCheckItem(text: "Free updates")
             }
@@ -202,7 +202,7 @@ struct PaywallCheckItem: View {
                 .font(.system(size: 16))
                 .foregroundColor(.white)
 
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .font(.nunitoBold(size: 13))
                 .foregroundColor(.white)
 

@@ -14,10 +14,12 @@ import CoreText
 @main
 struct typoApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @AppStorage(AppLanguage.storageKey) private var appLanguageRaw = AppLanguage.system.rawValue
 
     var body: some Scene {
         Settings {
             SettingsView()
+                .environment(\.locale, AppLanguage(rawValue: appLanguageRaw)?.locale ?? .autoupdatingCurrent)
         }
     }
 }
@@ -58,6 +60,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var cancellables = Set<AnyCancellable>()
     var previousActiveApp: NSRunningApplication?
     var menuBarMenuController = MenuBarMenuWindowController()
+
+    private var appLocale: Locale {
+        AppLanguage.current.locale
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         globalAppDelegate = self
@@ -151,7 +157,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showOnboarding() {
-        let onboardingView = OnboardingView(onComplete: { [weak self] in
+        let onboardingView = SetupWizardView(onComplete: { [weak self] in
             self?.onboardingWindow?.close()
             self?.onboardingWindow = nil
             self?.setupApp()
@@ -167,7 +173,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
-        window.contentView = NSHostingView(rootView: onboardingView)
+        window.contentView = NSHostingView(rootView: onboardingView.environment(\.locale, appLocale))
         window.center()
 
         // Hide minimize and zoom buttons, keep only close button
@@ -231,6 +237,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.hidePopover()
             }
         )
+        .environment(\.locale, appLocale)
 
         let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 380),
@@ -327,7 +334,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 catIcon.isTemplate = true
                 button.image = catIcon
             } else {
-                button.image = NSImage(systemSymbolName: "text.cursor", accessibilityDescription: "TexTab")
+                button.image = NSImage(systemSymbolName: "text.cursor", accessibilityDescription: "ShortcutAI")
             }
             button.action = #selector(statusBarButtonClicked(_:))
             button.target = self
@@ -343,7 +350,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let statusItem = statusItem else { return }
             menuBarMenuController.showMenu(
                 relativeTo: statusItem,
-                onOpenTexTab: { [weak self] in
+                onOpenShortcutAI: { [weak self] in
                     self?.showPopover()
                 },
                 onSettings: { [weak self] in
@@ -567,6 +574,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let quickPromptView = QuickPromptView(onClose: { [weak self] in
             self?.quickPromptWindow?.orderOut(nil)
         })
+        .environment(\.locale, appLocale)
 
         let panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 420, height: 300),
@@ -662,6 +670,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.hidePopover()
             self?.openSettings()
         }, initialAction: action)
+        .environment(\.locale, appLocale)
 
         // Tamaño más grande para acciones directas
         let width: CGFloat = action != nil ? 560 : 320
@@ -706,7 +715,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.title = ""
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.contentView = NSHostingView(rootView: SettingsView())
+        window.contentView = NSHostingView(
+            rootView: SettingsView()
+                .environment(\.locale, appLocale)
+        )
         window.center()
         window.isReleasedWhenClosed = false
 
