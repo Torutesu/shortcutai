@@ -2,6 +2,7 @@
 
 use arboard::Clipboard;
 use enigo::{Enigo, Key, KeyboardControllable};
+use keyring::Entry;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -39,6 +40,19 @@ struct SetupPayload {
   actions: Vec<Action>,
   default_action_id: Option<String>,
   setup_completed_at: String,
+}
+
+/// Internal structure for storing setup without API key in JSON.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SetupFile {
+  provider: String,
+  actions: Vec<Action>,
+  default_action_id: Option<String>,
+  setup_completed_at: String,
+  /// Legacy field for backward compatibility migration.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  api_key: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,6 +124,41 @@ fn load_logs_from_disk(handle: &AppHandle) -> Vec<ExecutionLogEntry> {
   match logs_file_path(handle).and_then(|path| read_json::<Vec<ExecutionLogEntry>>(&path)) {
     Ok(Some(logs)) => logs,
     _ => Vec::new(),
+  }
+}
+
+/// Get keyring entry for secure API key storage.
+fn get_keyring_entry() -> Result<Entry, String> {
+  Entry::new("ShortcutAI", "api_key")
+    .map_err(|error| format!("Failed to access keyring: {error}"))
+}
+
+/// Save API key securely to Windows Credential Manager.
+fn save_api_key_secure(api_key: &str) -> Result<(), String> {
+  let entry = get_keyring_entry()?;
+  entry
+    .set_password(api_key)
+    .map_err(|error| format!("Failed to save API key to keyring: {error}"))
+}
+
+/// Load API key securely from Windows Credential Manager.
+fn load_api_key_secure() -> Result<Option<String>, String> {
+  let entry = get_keyring_entry()?;
+  match entry.get_password() {
+    Ok(password) => Ok(Some(password)),
+    Err(keyring::Error::NoEntry) => Ok(None),
+    Err(error) => Err(format!("Failed to load API key from keyring: {error}")),
+  }
+}
+
+/// Delete API key from Windows Credential Manager.
+#[allow(dead_code)]
+fn delete_api_key_secure() -> Result<(), String> {
+  let entry = get_keyring_entry()?;
+  match entry.delete_password() {
+    Ok(()) => Ok(()),
+    Err(keyring::Error::NoEntry) => Ok(()), // Already deleted
+    Err(error) => Err(format!("Failed to delete API key from keyring: {error}")),
   }
 }
 
@@ -275,13 +324,56 @@ fn hide_window(handle: AppHandle) -> Result<(), String> {
 #[tauri::command]
 fn load_setup(handle: AppHandle) -> Result<Option<SetupPayload>, String> {
   let path = setup_file_path(&handle)?;
-  read_json::<SetupPayload>(&path)
+  let setup_file = match read_json::<SetupFile>(&path)? {
+    Some(s) => s,
+    None => return Ok(None),
+  };
+
+  // Migration: If api_key exists in JSON (legacy), move it to keyring.
+  if let Some(legacy_api_key) = &setup_file.api_key {
+    if !legacy_api_key.is_empty() {
+      save_api_key_secure(legacy_api_key)?;
+
+      // Remove api_key from JSON file after migration.
+      let migrated = SetupFile {
+        provider: setup_file.provider.clone(),
+        actions: setup_file.actions.clone(),
+        default_action_id: setup_file.default_action_id.clone(),
+        setup_completed_at: setup_file.setup_completed_at.clone(),
+        api_key: None,
+      };
+      write_json(&path, &migrated)?;
+    }
+  }
+
+  // Load API key from keyring.
+  let api_key = load_api_key_secure()?.unwrap_or_default();
+
+  Ok(Some(SetupPayload {
+    provider: setup_file.provider,
+    api_key,
+    actions: setup_file.actions,
+    default_action_id: setup_file.default_action_id,
+    setup_completed_at: setup_file.setup_completed_at,
+  }))
 }
 
 #[tauri::command]
 fn save_setup(handle: AppHandle, setup: SetupPayload) -> Result<(), String> {
+  // Save API key to Windows Credential Manager.
+  save_api_key_secure(&setup.api_key)?;
+
+  // Save everything else to JSON file (without API key).
+  let setup_file = SetupFile {
+    provider: setup.provider,
+    actions: setup.actions,
+    default_action_id: setup.default_action_id,
+    setup_completed_at: setup.setup_completed_at,
+    api_key: None, // Never store API key in JSON
+  };
+
   let path = setup_file_path(&handle)?;
-  write_json(&path, &setup)
+  write_json(&path, &setup_file)
 }
 
 #[tauri::command]

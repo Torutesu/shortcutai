@@ -12,16 +12,7 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false,
-      "event": {
-        "listen": true,
-        "emit": true
-      },
-      "window": {
-        "show": true,
-        "setFocus": true,
-        "unminimize": true
-      }
+      "all": true
     },
     "bundle": {
       "active": true,
